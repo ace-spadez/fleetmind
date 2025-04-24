@@ -23,7 +23,7 @@ type DirectiveBusChatProps = {
 // Generate a simple ID
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
-// Example instructions - would come from a real data source
+// Example instructions for demonstration
 const mockInstructions: Instruction[] = [
   {
     id: generateId(),
@@ -56,7 +56,7 @@ const DirectiveBusChat = ({ channelId, sourceBotId, targetBotId }: DirectiveBusC
   const [newInstruction, setNewInstruction] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   
-  // Initialize with mock data on component mount
+  // Initialize with example data
   useEffect(() => {
     setInstructions(mockInstructions);
   }, []);
