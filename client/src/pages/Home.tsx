@@ -4,13 +4,9 @@ import ChatModule from "@/components/chat/ChatModule";
 import DocumentationModule from "@/components/documentation/DocumentationModule";
 import CodeModule from "@/components/code/CodeModule";
 import OrganizationModule from "@/components/organization/OrganizationModule";
-import { useTheme } from "@/context/ThemeProvider";
-import { Button } from "@/components/ui/button";
-import { Sun, Moon } from "lucide-react";
 
 export default function Home() {
   const { activeModule } = useWorkspace();
-  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="h-screen flex overflow-hidden bg-background">
@@ -37,16 +33,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      {/* Theme Toggle */}
-      <Button 
-        variant="outline" 
-        size="icon" 
-        className="fixed bottom-4 right-4 rounded-full"
-        onClick={toggleTheme}
-      >
-        {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-      </Button>
     </div>
   );
 }

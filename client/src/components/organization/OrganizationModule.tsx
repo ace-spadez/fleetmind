@@ -111,7 +111,7 @@ const OrganizationModule = () => {
     });
   }, [orgBots, nodePositions]);
 
-  // Enhanced edge styling with curved connections and clear directional indicators
+  // Simpler edge styling with curved connections and reduced thickness
   const initialEdges: Edge[] = useMemo(() => {
     return orgConnections.map((conn) => ({
       id: conn.id,
@@ -125,38 +125,24 @@ const OrganizationModule = () => {
       style: {
         // Red for directive bus, Light gray for communication
         stroke: conn.type === 'directive' ? '#ef4444' : '#9ca3af',
-        // Make directive connections thicker and more visible
-        strokeWidth: conn.type === 'directive' ? 3 : 1,
+        // Thinner connections as requested
+        strokeWidth: conn.type === 'directive' ? 1.5 : 1,
         // Dotted/dashed line for communication channels
-        strokeDasharray: conn.type === 'communication' ? '5 5' : undefined,
+        strokeDasharray: conn.type === 'communication' ? '3 3' : undefined,
         // Directive buses should be more prominent than communication channels
-        opacity: conn.type === 'directive' ? 1 : 0.5,
+        opacity: conn.type === 'directive' ? 0.9 : 0.4,
       },
-      // Distinct arrow markers based on connection type
+      // Smaller arrow markers based on connection type
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        width: conn.type === 'directive' ? 18 : 12,
-        height: conn.type === 'directive' ? 18 : 12,
+        width: conn.type === 'directive' ? 12 : 8,
+        height: conn.type === 'directive' ? 12 : 8,
         color: conn.type === 'directive' ? '#ef4444' : '#9ca3af',
       },
       // Connect to the appropriate handles on nodes
       sourceHandle: conn.type === 'directive' ? 'directiveSource' : 'communicationSource',
       targetHandle: conn.type === 'directive' ? 'directiveTarget' : 'communicationTarget',
-      // Add label for directive buses showing connection
-      label: conn.type === 'directive' ? `${conn.source} → ${conn.target}` : undefined,
-      labelStyle: { 
-        fill: '#ef4444', 
-        fontWeight: 600,
-        fontSize: 10,
-        fontFamily: 'Inter, sans-serif',
-      },
-      labelBgStyle: { 
-        fill: 'rgba(17, 24, 39, 0.7)',
-        fillOpacity: 0.7,
-        rx: 4,
-        stroke: '#ef4444',
-        strokeWidth: 0.5,
-      },
+      // No labels as requested
     }));
   }, [orgConnections]);
 
