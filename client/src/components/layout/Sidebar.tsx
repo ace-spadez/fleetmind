@@ -1,4 +1,5 @@
 import { useWorkspace } from "@/context/WorkspaceProvider";
+import { useTheme } from "@/context/ThemeProvider";
 import { IconButton } from "../ui/icon-button";
 import { Module } from "@/types";
 import { 
@@ -9,11 +10,14 @@ import {
   PieChart, 
   DollarSign, 
   Settings,
-  Users
+  Users,
+  Sun,
+  Moon
 } from "lucide-react";
 
 const Sidebar = () => {
   const { activeModule, setActiveModule } = useWorkspace();
+  const { theme, toggleTheme } = useTheme();
 
   const handleModuleClick = (module: Module) => {
     setActiveModule(module);

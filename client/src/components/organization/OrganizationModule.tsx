@@ -24,21 +24,24 @@ const nodeTypes = {
 // Function to create horizontal left-to-right hierarchy layout
 const generateNodePositions = (bots: OrgBot[]) => {
   const positions = new Map<string, { x: number, y: number }>();
+  
+  // Define strict horizontal layout with fixed X positions for each role tier
   const roleXPositions: Record<string, number> = {
     'ceo': 50,
-    'vp': 300,
-    'manager': 600,
-    'developer': 900
+    'vp': 350,
+    'manager': 650,
+    'developer': 950
   };
   
+  // Define vertical spacing for each role type
   const roleYSpread: Record<string, number> = {
     'ceo': 80,     // Small spread for CEO (usually just one)
-    'vp': 150,     // Medium spread for VPs
-    'manager': 150, // Medium spread for managers
-    'developer': 120 // Large spread for developers
+    'vp': 160,     // Medium spread for VPs
+    'manager': 130, // Medium spread for managers
+    'developer': 110 // Tight spread for developers (usually more of them)
   };
   
-  // Group bots by role
+  // Group bots by role for vertical distribution
   const botsByRole: Record<string, OrgBot[]> = {};
   bots.forEach(bot => {
     if (!botsByRole[bot.role]) {
@@ -47,7 +50,7 @@ const generateNodePositions = (bots: OrgBot[]) => {
     botsByRole[bot.role].push(bot);
   });
   
-  // Assign positions based on role - left to right hierarchy
+  // Assign positions based on role - strict horizontal left-to-right hierarchy
   Object.entries(botsByRole).forEach(([role, roleBots]) => {
     const baseX = roleXPositions[role] || 200;
     const ySpread = roleYSpread[role] || 120;
@@ -56,11 +59,17 @@ const generateNodePositions = (bots: OrgBot[]) => {
       // Calculate Y position based on the number of bots with this role
       const totalBots = roleBots.length;
       const totalHeight = totalBots * ySpread;
-      const startY = 300 - (totalHeight / 2); // Center vertically
+      
+      // Center nodes vertically within the view
+      const startY = 350 - (totalHeight / 2);
       const y = startY + (index * ySpread);
       
-      // Add some random variation to X position for natural look
-      const xVariation = Math.random() * 40 - 20; // Random value between -20 and 20
+      // Add subtle horizontal variation for each role to prevent perfect alignment
+      // CEOs should be perfectly aligned, others can have small variations
+      let xVariation = 0;
+      if (role !== 'ceo') {
+        xVariation = Math.random() * 30 - 15; // Subtle random value between -15 and 15
+      }
       
       positions.set(bot.id, { 
         x: baseX + xVariation, 
@@ -102,32 +111,52 @@ const OrganizationModule = () => {
     });
   }, [orgBots, nodePositions]);
 
-  // Enhanced edge styling with curved connections
+  // Enhanced edge styling with curved connections and clear directional indicators
   const initialEdges: Edge[] = useMemo(() => {
     return orgConnections.map((conn) => ({
       id: conn.id,
       source: conn.source,
       target: conn.target,
+      // Animate directive connections to indicate data flow
       animated: conn.type === 'directive',
-      // Use bezier curve for connections
+      // Use smoothstep for better curved appearance
       type: 'smoothstep',
-      // Customize connections based on type
+      // Custom edge style based on connection type
       style: {
-        stroke: conn.type === 'directive' ? '#ef4444' : '#9ca3af', // Red for directive, Gray for communication
-        strokeWidth: conn.type === 'directive' ? 2 : 1,
-        strokeDasharray: conn.type === 'communication' ? '4 4' : undefined, // Dotted line for communication
-        opacity: conn.type === 'directive' ? 0.9 : 0.5,
+        // Red for directive bus, Light gray for communication
+        stroke: conn.type === 'directive' ? '#ef4444' : '#9ca3af',
+        // Make directive connections thicker and more visible
+        strokeWidth: conn.type === 'directive' ? 3 : 1,
+        // Dotted/dashed line for communication channels
+        strokeDasharray: conn.type === 'communication' ? '5 5' : undefined,
+        // Directive buses should be more prominent than communication channels
+        opacity: conn.type === 'directive' ? 1 : 0.5,
       },
-      // Add arrow heads to connections
+      // Distinct arrow markers based on connection type
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        width: conn.type === 'directive' ? 15 : 12,
-        height: conn.type === 'directive' ? 15 : 12,
+        width: conn.type === 'directive' ? 18 : 12,
+        height: conn.type === 'directive' ? 18 : 12,
         color: conn.type === 'directive' ? '#ef4444' : '#9ca3af',
       },
-      // Choose connection points based on type - use proper handle IDs
+      // Connect to the appropriate handles on nodes
       sourceHandle: conn.type === 'directive' ? 'directiveSource' : 'communicationSource',
       targetHandle: conn.type === 'directive' ? 'directiveTarget' : 'communicationTarget',
+      // Add label for directive buses showing connection
+      label: conn.type === 'directive' ? `${conn.source} → ${conn.target}` : undefined,
+      labelStyle: { 
+        fill: '#ef4444', 
+        fontWeight: 600,
+        fontSize: 10,
+        fontFamily: 'Inter, sans-serif',
+      },
+      labelBgStyle: { 
+        fill: 'rgba(17, 24, 39, 0.7)',
+        fillOpacity: 0.7,
+        rx: 4,
+        stroke: '#ef4444',
+        strokeWidth: 0.5,
+      },
     }));
   }, [orgConnections]);
 
