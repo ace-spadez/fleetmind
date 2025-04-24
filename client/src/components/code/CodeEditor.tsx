@@ -6,8 +6,22 @@ type CodeEditorProps = {
 
 const CodeEditor = ({ fileName }: CodeEditorProps) => {
   const [code, setCode] = useState("");
+  const [highlightedCode, setHighlightedCode] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const highlightedCodeRef = useRef<HTMLDivElement>(null);
+  
+  // Get file type/language from extension
+  const getLanguage = (fileName: string): string => {
+    if (fileName.endsWith('.jsx')) return 'jsx';
+    if (fileName.endsWith('.js')) return 'javascript';
+    if (fileName.endsWith('.ts')) return 'typescript';
+    if (fileName.endsWith('.tsx')) return 'tsx';
+    if (fileName.endsWith('.json')) return 'json';
+    if (fileName.endsWith('.css')) return 'css';
+    if (fileName.endsWith('.html')) return 'html';
+    return 'plaintext';
+  };
   
   useEffect(() => {
     // Load different code based on file extension
@@ -28,9 +42,64 @@ const CodeEditor = ({ fileName }: CodeEditorProps) => {
     }
   }, [fileName]);
   
+  // Apply basic syntax highlighting
   useEffect(() => {
     updateLineNumbers();
-  }, [code]);
+    
+    const language = getLanguage(fileName);
+    
+    // This is a simple regex-based syntax highlighter
+    let highlighted = code
+      // Replace HTML special characters first
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    // Comments
+    highlighted = highlighted.replace(
+      /(\/\/.*$)|(\/\*[\s\S]*?\*\/)|((#|--).*)$/gm, 
+      '<span class="comment">$&</span>'
+    );
+    
+    // Strings
+    highlighted = highlighted.replace(
+      /(["'`])(.*?)\1/g, 
+      '<span class="string">$&</span>'
+    );
+    
+    // Numbers
+    highlighted = highlighted.replace(
+      /\b(\d+(\.\d+)?)\b/g, 
+      '<span class="number">$&</span>'
+    );
+    
+    // Keywords (common for JS/TS)
+    if (language.includes('javascript') || language.includes('typescript') || language.includes('jsx') || language.includes('tsx')) {
+      const keywords = [
+        'const', 'let', 'var', 'function', 'class', 'extends', 'implements',
+        'interface', 'type', 'enum', 'return', 'if', 'else', 'for', 'while',
+        'switch', 'case', 'break', 'continue', 'import', 'export', 'from',
+        'default', 'async', 'await', 'try', 'catch', 'throw', 'new', 'this'
+      ];
+      
+      const keywordPattern = new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g');
+      highlighted = highlighted.replace(
+        keywordPattern,
+        '<span class="keyword">$&</span>'
+      );
+      
+      // Function detection
+      highlighted = highlighted.replace(
+        /\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/g,
+        '<span class="function">$1</span>('
+      );
+    }
+    
+    // Replace newlines with <br> after all other replacements
+    highlighted = highlighted.replace(/\n/g, '<br>');
+    
+    setHighlightedCode(highlighted);
+  }, [code, fileName]);
   
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCode(e.target.value);
@@ -70,6 +139,11 @@ const CodeEditor = ({ fileName }: CodeEditorProps) => {
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
     }
+    
+    if (highlightedCodeRef.current) {
+      highlightedCodeRef.current.scrollTop = e.currentTarget.scrollTop;
+      highlightedCodeRef.current.scrollLeft = e.currentTarget.scrollLeft;
+    }
   };
   
   return (
@@ -79,19 +153,31 @@ const CodeEditor = ({ fileName }: CodeEditorProps) => {
         className="line-numbers text-gray-500 p-2 text-right pr-3 border-r border-gray-700 bg-[#252525] overflow-hidden"
         style={{ minWidth: '3rem' }}
       />
-      <textarea
-        ref={textareaRef}
-        value={code}
-        onChange={handleCodeChange}
-        onKeyDown={handleTabKey}
-        onScroll={handleScroll}
-        className="w-full bg-[#1e1e1e] text-gray-200 p-2 resize-none border-none outline-none font-mono text-sm"
-        spellCheck="false"
-        style={{
-          lineHeight: '1.6',
-          tabSize: 2,
-        }}
-      />
+      <div className="relative flex-1">
+        {/* Highlighted code display behind the textarea */}
+        <div
+          ref={highlightedCodeRef}
+          className="absolute inset-0 p-2 font-mono text-sm overflow-auto whitespace-pre pointer-events-none"
+          dangerouslySetInnerHTML={{ __html: highlightedCode }}
+          style={{ lineHeight: '1.6', tabSize: 2 }}
+        />
+        
+        {/* Transparent textarea for editing */}
+        <textarea
+          ref={textareaRef}
+          value={code}
+          onChange={handleCodeChange}
+          onKeyDown={handleTabKey}
+          onScroll={handleScroll}
+          className="absolute inset-0 w-full h-full bg-transparent text-transparent caret-white p-2 resize-none border-none outline-none font-mono text-sm"
+          spellCheck="false"
+          style={{
+            lineHeight: '1.6',
+            tabSize: 2,
+            caretColor: 'white',
+          }}
+        />
+      </div>
     </div>
   );
 };
