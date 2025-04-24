@@ -20,12 +20,12 @@ const Sidebar = () => {
   };
 
   const navItems = [
-    { id: "chat", icon: <Bot size={20} />, module: "chat" as Module },
-    { id: "docs", icon: <NotebookText size={20} />, module: "docs" as Module },
-    { id: "code", icon: <Code size={20} />, module: "code" as Module },
-    { id: "chart", icon: <PieChart size={20} />, module: "chart" as Module },
-    { id: "organization", icon: <Users size={20} />, module: "organization" as Module },
-    { id: "budget", icon: <DollarSign size={20} />, module: "budget" as Module },
+    { id: "chat", icon: <Bot size={18} />, module: "chat" as Module },
+    { id: "docs", icon: <NotebookText size={18} />, module: "docs" as Module },
+    { id: "code", icon: <Code size={18} />, module: "code" as Module },
+    { id: "chart", icon: <PieChart size={18} />, module: "chart" as Module },
+    { id: "organization", icon: <Users size={18} />, module: "organization" as Module },
+    { id: "budget", icon: <DollarSign size={18} />, module: "budget" as Module },
   ];
 
   return (
@@ -38,7 +38,7 @@ const Sidebar = () => {
         aria-label="home"
         className="mb-6"
       >
-        <Home size={20} />
+        <Home size={18} />
       </IconButton>
       
       {/* Center the main navigation items */}
@@ -62,7 +62,7 @@ const Sidebar = () => {
         className="mt-auto"
         aria-label="settings"
       >
-        <Settings size={20} />
+        <Settings size={18} />
       </IconButton>
     </div>
   );
