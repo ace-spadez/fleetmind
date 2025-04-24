@@ -8,7 +8,8 @@ import {
   Code, 
   PieChart, 
   DollarSign, 
-  Settings 
+  Settings,
+  Users
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -19,17 +20,29 @@ const Sidebar = () => {
   };
 
   const navItems = [
-    { id: "home", icon: <Home size={22} />, module: "home" as Module },
-    { id: "chat", icon: <Bot size={22} />, module: "chat" as Module },
-    { id: "docs", icon: <NotebookText size={22} />, module: "docs" as Module },
-    { id: "code", icon: <Code size={22} />, module: "code" as Module },
-    { id: "chart", icon: <PieChart size={22} />, module: "chart" as Module },
-    { id: "budget", icon: <DollarSign size={22} />, module: "budget" as Module },
+    { id: "chat", icon: <Bot size={20} />, module: "chat" as Module },
+    { id: "docs", icon: <NotebookText size={20} />, module: "docs" as Module },
+    { id: "code", icon: <Code size={20} />, module: "code" as Module },
+    { id: "chart", icon: <PieChart size={20} />, module: "chart" as Module },
+    { id: "organization", icon: <Users size={20} />, module: "organization" as Module },
+    { id: "budget", icon: <DollarSign size={20} />, module: "budget" as Module },
   ];
 
   return (
-    <div className="w-16 bg-[hsl(var(--sidebar-background))] flex flex-col items-center py-4 border-r border-[hsl(var(--sidebar-border))]">
-      <div className="flex flex-col items-center space-y-6 flex-1">
+    <div className="w-12 bg-[hsl(var(--sidebar-background))] flex flex-col items-center py-4 border-r border-[hsl(var(--sidebar-border))]">
+      {/* Home button at top */}
+      <IconButton
+        key="home"
+        variant={activeModule === "home" ? "active" : "default"}
+        onClick={() => handleModuleClick("home")}
+        aria-label="home"
+        className="mb-6"
+      >
+        <Home size={20} />
+      </IconButton>
+      
+      {/* Center the main navigation items */}
+      <div className="flex flex-col items-center space-y-5 flex-1 justify-center">
         {navItems.map((item) => (
           <IconButton
             key={item.id}
@@ -42,13 +55,14 @@ const Sidebar = () => {
         ))}
       </div>
 
+      {/* Settings button at bottom */}
       <IconButton
         variant={activeModule === "settings" ? "active" : "default"}
         onClick={() => handleModuleClick("settings")}
         className="mt-auto"
         aria-label="settings"
       >
-        <Settings size={22} />
+        <Settings size={20} />
       </IconButton>
     </div>
   );

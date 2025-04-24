@@ -112,6 +112,28 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    font-size: 13px;
+  }
+  
+  /* Make all text elements smaller to match Replit style */
+  p, span, div, button, input, textarea, select, li {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  h2 {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
   }
 }
 

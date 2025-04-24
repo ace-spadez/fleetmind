@@ -5,7 +5,7 @@ export type SidebarItem = {
   active?: boolean;
 };
 
-export type Module = 'home' | 'chat' | 'docs' | 'code' | 'chart' | 'budget' | 'settings';
+export type Module = 'home' | 'chat' | 'docs' | 'code' | 'chart' | 'organization' | 'budget' | 'settings';
 
 export type Bot = {
   id: string;
