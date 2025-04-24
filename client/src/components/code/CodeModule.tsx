@@ -259,9 +259,9 @@ const CodeModule = () => {
               {/* Tabs bar */}
               <EditorTabs 
                 pane={pane}
-                onTabClose={(tabId) => closeEditorTab(tabId, pane.id)}
-                onTabClick={(tabId) => setActiveEditorTab(tabId, pane.id)}
-                onTabDragStart={(tabId) => handleTabDragStart(tabId, pane.id)}
+                onTabClose={(tabId: string) => closeEditorTab(tabId, pane.id)}
+                onTabClick={(tabId: string) => setActiveEditorTab(tabId, pane.id)}
+                onTabDragStart={(tabId: string) => handleTabDragStart(tabId, pane.id)}
                 onTabDragEnd={handleTabDragEnd}
               />
               
@@ -283,7 +283,7 @@ const CodeModule = () => {
               </div>
               
               {/* Overlay for drag targets */}
-              {dropTarget && targetPaneId !== pane.id && (
+              {dropTarget && draggedPaneId !== pane.id && (
                 <div className="absolute inset-0 pointer-events-none z-10">
                   {dropTarget === "left" && (
                     <div className="absolute inset-y-0 left-0 w-1/5 bg-blue-500/30 border-r-2 border-blue-500"></div>
@@ -327,7 +327,7 @@ const CodeModule = () => {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* File Tree */}
-      <CodeTree codeFiles={codeFiles} onFileClick={(file) => 
+      <CodeTree codeFiles={codeFiles} onFileClick={(file: TreeNode) => 
         openFileInEditor(file.id, file.name, file.path)
       } />
       
