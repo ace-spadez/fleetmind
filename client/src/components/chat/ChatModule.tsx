@@ -1,14 +1,33 @@
 import ChannelList from "./ChannelList";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
+import DirectiveBusChat from "./DirectiveBusChat";
 import UserProfile from "./UserProfile";
 import { useWorkspace } from "@/context/WorkspaceProvider";
-import { Hash, Users, Bell, Pin, Search } from "lucide-react";
+import { Hash, Users, Bell, Pin, Search, Zap } from "lucide-react";
 
 const ChatModule = () => {
   const { activeChannelId, chats } = useWorkspace();
   
   const activeChat = chats.find(chat => chat.channelId === activeChannelId);
+  
+  // Check if this is a directive bus channel
+  const isDirectiveBus = activeChannelId.includes('to-');
+  
+  // Extract source and target bot IDs for directive buses
+  const getDirectiveBusInfo = () => {
+    // Parse IDs from channel names like "code-to-design" or directive channel names
+    if (activeChannelId === "code-to-design") {
+      return { source: "swift-eagle-9042", target: "creative-owl-7238" };
+    } else if (activeChannelId === "design-to-deploy") {
+      return { source: "creative-owl-7238", target: "clever-fox-3721" };
+    } else if (activeChannelId === "dev-to-analytics") {
+      return { source: "swift-eagle-9042", target: "precise-deer-5190" };
+    }
+    return { source: "", target: "" };
+  };
+  
+  const { source, target } = getDirectiveBusInfo();
   
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -20,8 +39,17 @@ const ChatModule = () => {
         {/* Chat Header */}
         <div className="h-14 border-b border-gray-700/50 flex items-center px-4">
           <div className="flex items-center">
-            <Hash className="text-[hsl(var(--dark-2))] mr-2" size={18} />
+            {isDirectiveBus ? (
+              <Zap className="text-red-400 mr-2" size={18} />
+            ) : (
+              <Hash className="text-[hsl(var(--dark-2))] mr-2" size={18} />
+            )}
             <h3 className="font-medium text-white">{activeChannelId}</h3>
+            {isDirectiveBus && (
+              <span className="ml-2 text-xs bg-red-900/30 text-red-300 px-2 py-0.5 rounded">
+                directive bus
+              </span>
+            )}
           </div>
           
           <div className="ml-auto flex items-center space-x-3">
@@ -45,11 +73,21 @@ const ChatModule = () => {
           </div>
         </div>
         
-        {/* Chat Messages */}
-        <ChatMessages messages={activeChat?.messages || []} />
-        
-        {/* Chat Input */}
-        <ChatInput channelId={activeChannelId} />
+        {/* Content based on channel type */}
+        {isDirectiveBus ? (
+          /* Directive Bus Chat */
+          <DirectiveBusChat 
+            channelId={activeChannelId} 
+            sourceBotId={source} 
+            targetBotId={target} 
+          />
+        ) : (
+          /* Regular Chat */
+          <>
+            <ChatMessages messages={activeChat?.messages || []} />
+            <ChatInput channelId={activeChannelId} />
+          </>
+        )}
       </div>
     </div>
   );
