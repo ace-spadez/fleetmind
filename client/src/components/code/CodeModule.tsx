@@ -32,7 +32,7 @@ const CodeModule = () => {
       <div className="flex-1 flex flex-col bg-[hsl(var(--dark-9))]">
         {/* Code Header */}
         {activeFile ? (
-          <div className="h-14 border-b border-[hsl(var(--dark-7))] flex items-center px-4">
+          <div className="h-14 border-b border-gray-700/50 flex items-center px-4">
             <div className="flex items-center">
               <FileCode className="text-[hsl(var(--dark-2))] mr-2" size={18} />
               <h3 className="font-medium text-white">{activeFile.name}</h3>
@@ -48,7 +48,7 @@ const CodeModule = () => {
             </div>
           </div>
         ) : (
-          <div className="h-14 border-b border-[hsl(var(--dark-7))] flex items-center px-4">
+          <div className="h-14 border-b border-gray-700/50 flex items-center px-4">
             <h3 className="font-medium text-white">No file selected</h3>
           </div>
         )}
