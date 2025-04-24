@@ -1,42 +1,15 @@
 import { useEffect, useState, useRef } from "react";
-import { useWorkspace } from "@/context/WorkspaceProvider";
 
 type CodeEditorProps = {
   fileName: string;
-  fileId?: string;
-  paneId?: string;
 };
 
-const CodeEditor = ({ fileName, fileId, paneId }: CodeEditorProps) => {
-  const { codeFiles, updateCodeFileContent } = useWorkspace();
+const CodeEditor = ({ fileName }: CodeEditorProps) => {
   const [code, setCode] = useState("");
   const [highlightedCode, setHighlightedCode] = useState("");
-  const [isDirty, setIsDirty] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const highlightedCodeRef = useRef<HTMLDivElement>(null);
-  
-  // Find file content if fileId is provided
-  useEffect(() => {
-    if (fileId) {
-      const findContent = (nodes: any[]): string | undefined => {
-        for (const node of nodes) {
-          if (node.id === fileId) return node.content;
-          if (node.children) {
-            const found = findContent(node.children);
-            if (found) return found;
-          }
-        }
-        return undefined;
-      };
-      
-      const content = findContent(codeFiles);
-      if (content) {
-        setCode(content);
-        setIsDirty(false);
-      }
-    }
-  }, [fileId, codeFiles]);
   
   // Get file type/language from extension
   const getLanguage = (fileName: string): string => {
@@ -129,19 +102,7 @@ const CodeEditor = ({ fileName, fileId, paneId }: CodeEditorProps) => {
   }, [code, fileName]);
   
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    setCode(newValue);
-    setIsDirty(true);
-    
-    // Save changes to workspace context if fileId is provided
-    if (fileId) {
-      // Debounce the update for better performance
-      const timeoutId = setTimeout(() => {
-        updateCodeFileContent(fileId, newValue);
-      }, 500);
-      
-      return () => clearTimeout(timeoutId);
-    }
+    setCode(e.target.value);
   };
   
   const updateLineNumbers = () => {

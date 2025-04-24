@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const UserProfile = () => {
   return (
-    <div className="p-3 bg-[hsl(var(--discord-10))] border-t border-gray-700/50 flex items-center">
+    <div className="p-3 bg-[hsl(var(--discord-10))] border-t border-[hsl(var(--dark-7))] flex items-center">
       <Avatar className="h-8 w-8 mr-2">
         <AvatarFallback className="bg-green-600 text-white">U</AvatarFallback>
       </Avatar>

@@ -60,29 +60,6 @@ export type TreeNode = {
   path: string;
   expanded?: boolean;
   active?: boolean;
-  content?: string;
-};
-
-export type EditorTab = {
-  id: string;
-  fileId: string;
-  fileName: string;
-  filePath: string;
-  active: boolean;
-  isDirty?: boolean;
-};
-
-export type EditorPane = {
-  id: string;
-  tabs: EditorTab[];
-  activeTabId: string | null;
-  size?: number; // For flex sizing in split views
-};
-
-export type EditorLayout = {
-  direction: 'horizontal' | 'vertical';
-  panes: EditorPane[];
-  sizes?: number[]; // Array of flex values for panes 
 };
 
 export type BotRole = 'ceo' | 'vp' | 'manager' | 'developer';

@@ -4,15 +4,15 @@ import { IconButton } from "../ui/icon-button";
 import { Module } from "@/types";
 import { 
   Home, 
+  Bot, 
   NotebookText, 
+  Code, 
   PieChart, 
   DollarSign, 
   Settings,
+  Users,
   Sun,
-  Moon,
-  BotMessageSquare,
-  Terminal,
-  Network
+  Moon
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -24,11 +24,11 @@ const Sidebar = () => {
   };
 
   const navItems = [
-    { id: "chat", icon: <BotMessageSquare size={18} />, module: "chat" as Module },
+    { id: "chat", icon: <Bot size={18} />, module: "chat" as Module },
     { id: "docs", icon: <NotebookText size={18} />, module: "docs" as Module },
-    { id: "code", icon: <Terminal size={18} />, module: "code" as Module },
+    { id: "code", icon: <Code size={18} />, module: "code" as Module },
     { id: "chart", icon: <PieChart size={18} />, module: "chart" as Module },
-    { id: "organization", icon: <Network size={18} />, module: "organization" as Module },
+    { id: "organization", icon: <Users size={18} />, module: "organization" as Module },
     { id: "budget", icon: <DollarSign size={18} />, module: "budget" as Module },
   ];
 
@@ -46,17 +46,15 @@ const Sidebar = () => {
       </IconButton>
       
       {/* Center the main navigation items */}
-      <div className="flex flex-col items-center space-y-2 flex-1 justify-center">
+      <div className="flex flex-col items-center space-y-5 flex-1 justify-center">
         {navItems.map((item) => (
           <IconButton
             key={item.id}
-            className="relative"
-            variant={'default'}
+            variant={activeModule === item.module ? "active" : "default"}
             onClick={() => handleModuleClick(item.module)}
             aria-label={item.id}
           >
             {item.icon}
-            {activeModule==item.module && <div className="absolute right-0 w-1 h-1 bg-primary rounded-r"></div>}
           </IconButton>
         ))}
       </div>

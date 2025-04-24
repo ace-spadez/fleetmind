@@ -67,9 +67,9 @@ const FileTree = ({ documents }: FileTreeProps) => {
   };
   
   return (
-    <div className="w-64 bg-[hsl(var(--dark-8))] flex flex-col border-r border-gray-700/50">
+    <div className="w-64 bg-[hsl(var(--dark-8))] flex flex-col border-r border-[hsl(var(--dark-7))]">
       {/* Workspace Header */}
-      <div className="p-4 border-b border-gray-700/50 flex items-center">
+      <div className="p-4 border-b border-[hsl(var(--dark-7))] flex items-center">
         <h2 className="font-semibold text-white">Documents</h2>
         <button 
           className="ml-auto text-[hsl(var(--dark-2))] hover:text-white"
