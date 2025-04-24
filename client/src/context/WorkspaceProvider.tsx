@@ -40,17 +40,20 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     setChats(prev => {
       const channelIndex = prev.findIndex(chat => chat.channelId === channelId);
       
+      // Create the message with proper type safety
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        content,
+        sender: isBotMessage ? 'bot' : 'user',
+        timestamp: new Date(),
+        userName: 'User',
+        botName: 'AssistantBot'
+      };
+      
       if (channelIndex === -1) {
         return [...prev, {
           channelId,
-          messages: [{
-            id: Date.now().toString(),
-            content,
-            sender: isBotMessage ? 'bot' : 'user',
-            timestamp: new Date(),
-            userName: 'User',
-            botName: 'AssistantBot'
-          }]
+          messages: [newMessage]
         }];
       }
       
@@ -58,14 +61,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         ...prev[channelIndex],
         messages: [
           ...prev[channelIndex].messages,
-          {
-            id: Date.now().toString(),
-            content,
-            sender: isBotMessage ? 'bot' : 'user',
-            timestamp: new Date(),
-            userName: 'User',
-            botName: 'AssistantBot'
-          }
+          newMessage
         ]
       };
       
