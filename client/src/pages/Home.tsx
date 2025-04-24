@@ -1,12 +1,25 @@
+import { useEffect } from "react";
 import { useWorkspace } from "@/context/WorkspaceProvider";
 import Sidebar from "@/components/layout/Sidebar";
 import ChatModule from "@/components/chat/ChatModule";
 import DocumentationModule from "@/components/documentation/DocumentationModule";
 import CodeModule from "@/components/code/CodeModule";
 import OrganizationModule from "@/components/organization/OrganizationModule";
+import { Module } from "@/types";
 
-export default function Home() {
-  const { activeModule } = useWorkspace();
+interface HomeProps {
+  initialModule?: Module;
+}
+
+export default function Home({ initialModule }: HomeProps) {
+  const { activeModule, setActiveModule } = useWorkspace();
+  
+  // Set the active module from the URL when the component mounts
+  useEffect(() => {
+    if (initialModule && initialModule !== activeModule) {
+      setActiveModule(initialModule);
+    }
+  }, [initialModule, activeModule, setActiveModule]);
 
   return (
     <div className="h-screen flex overflow-hidden bg-background">

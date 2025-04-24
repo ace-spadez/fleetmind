@@ -2,6 +2,7 @@ import { useWorkspace } from "@/context/WorkspaceProvider";
 import { useTheme } from "@/context/ThemeProvider";
 import { IconButton } from "../ui/icon-button";
 import { Module } from "@/types";
+import { Link, useLocation } from "wouter";
 import { 
   Home, 
   Bot, 
@@ -18,18 +19,20 @@ import {
 const Sidebar = () => {
   const { activeModule, setActiveModule } = useWorkspace();
   const { theme, toggleTheme } = useTheme();
+  const [location, navigate] = useLocation();
 
-  const handleModuleClick = (module: Module) => {
+  const handleModuleClick = (module: Module, path: string) => {
     setActiveModule(module);
+    navigate(path);
   };
 
   const navItems = [
-    { id: "chat", icon: <Bot size={18} />, module: "chat" as Module },
-    { id: "docs", icon: <NotebookText size={18} />, module: "docs" as Module },
-    { id: "code", icon: <Code size={18} />, module: "code" as Module },
-    { id: "chart", icon: <PieChart size={18} />, module: "chart" as Module },
-    { id: "organization", icon: <Users size={18} />, module: "organization" as Module },
-    { id: "budget", icon: <DollarSign size={18} />, module: "budget" as Module },
+    { id: "chat", icon: <Bot size={18} />, module: "chat" as Module, path: "/chat" },
+    { id: "docs", icon: <NotebookText size={18} />, module: "docs" as Module, path: "/docs" },
+    { id: "code", icon: <Code size={18} />, module: "code" as Module, path: "/code" },
+    { id: "chart", icon: <PieChart size={18} />, module: "chart" as Module, path: "/chart" },
+    { id: "organization", icon: <Users size={18} />, module: "organization" as Module, path: "/organization" },
+    { id: "budget", icon: <DollarSign size={18} />, module: "budget" as Module, path: "/budget" },
   ];
 
   return (
@@ -38,7 +41,7 @@ const Sidebar = () => {
       <IconButton
         key="home"
         variant={activeModule === "home" ? "active" : "default"}
-        onClick={() => handleModuleClick("home")}
+        onClick={() => handleModuleClick("home", "/")}
         aria-label="home"
         className="mb-6"
       >
@@ -46,15 +49,20 @@ const Sidebar = () => {
       </IconButton>
       
       {/* Center the main navigation items */}
-      <div className="flex flex-col items-center space-y-5 flex-1 justify-center">
+      <div className="flex flex-col items-center space-y-2 flex-1 justify-center">
         {navItems.map((item) => (
           <IconButton
             key={item.id}
+            className="relative"
             variant={activeModule === item.module ? "active" : "default"}
-            onClick={() => handleModuleClick(item.module)}
+            onClick={() => handleModuleClick(item.module, item.path)}
             aria-label={item.id}
           >
             {item.icon}
+            {/* a circle if active */}
+            {activeModule === item.module && (
+              <div className="absolute right-0 w-1 h-1 bg-primary rounded-full"></div>
+            )}
           </IconButton>
         ))}
       </div>
@@ -73,7 +81,7 @@ const Sidebar = () => {
       {/* Settings button at bottom */}
       <IconButton
         variant={activeModule === "settings" ? "active" : "default"}
-        onClick={() => handleModuleClick("settings")}
+        onClick={() => handleModuleClick("settings", "/settings")}
         aria-label="settings"
       >
         <Settings size={18} />
