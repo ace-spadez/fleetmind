@@ -21,21 +21,21 @@ const nodeTypes = {
   botNode: BotNode,
 };
 
-// Function to create randomized but non-overlapping positions
+// Function to create horizontal left-to-right hierarchy layout
 const generateNodePositions = (bots: OrgBot[]) => {
   const positions = new Map<string, { x: number, y: number }>();
-  const roleYPositions: Record<string, number> = {
+  const roleXPositions: Record<string, number> = {
     'ceo': 50,
-    'vp': 150,
-    'manager': 300,
-    'developer': 450
+    'vp': 300,
+    'manager': 600,
+    'developer': 900
   };
   
-  const roleXSpread: Record<string, number> = {
-    'ceo': 50, // Small spread for CEO (usually just one)
-    'vp': 250, // Medium spread for VPs
-    'manager': 250, // Medium spread for managers
-    'developer': 200 // Large spread for developers
+  const roleYSpread: Record<string, number> = {
+    'ceo': 80,     // Small spread for CEO (usually just one)
+    'vp': 150,     // Medium spread for VPs
+    'manager': 150, // Medium spread for managers
+    'developer': 120 // Large spread for developers
   };
   
   // Group bots by role
@@ -47,23 +47,24 @@ const generateNodePositions = (bots: OrgBot[]) => {
     botsByRole[bot.role].push(bot);
   });
   
-  // Assign positions based on role
+  // Assign positions based on role - left to right hierarchy
   Object.entries(botsByRole).forEach(([role, roleBots]) => {
-    const baseY = roleYPositions[role] || 200;
-    const xSpread = roleXSpread[role] || 200;
+    const baseX = roleXPositions[role] || 200;
+    const ySpread = roleYSpread[role] || 120;
     
     roleBots.forEach((bot, index) => {
-      // Calculate X position based on the number of bots with this role
-      const totalWidth = roleBots.length * xSpread;
-      const startX = 100;
-      const x = startX + (index * xSpread);
+      // Calculate Y position based on the number of bots with this role
+      const totalBots = roleBots.length;
+      const totalHeight = totalBots * ySpread;
+      const startY = 300 - (totalHeight / 2); // Center vertically
+      const y = startY + (index * ySpread);
       
-      // Add some random variation to Y position to avoid perfect alignment
-      const yVariation = Math.random() * 60 - 30; // Random value between -30 and 30
+      // Add some random variation to X position for natural look
+      const xVariation = Math.random() * 40 - 20; // Random value between -20 and 20
       
       positions.set(bot.id, { 
-        x, 
-        y: baseY + yVariation 
+        x: baseX + xVariation, 
+        y
       });
     });
   });
@@ -101,23 +102,32 @@ const OrganizationModule = () => {
     });
   }, [orgBots, nodePositions]);
 
+  // Enhanced edge styling with curved connections
   const initialEdges: Edge[] = useMemo(() => {
     return orgConnections.map((conn) => ({
       id: conn.id,
       source: conn.source,
       target: conn.target,
       animated: conn.type === 'directive',
+      // Use bezier curve for connections
+      type: 'smoothstep',
+      // Customize connections based on type
       style: {
         stroke: conn.type === 'directive' ? '#ef4444' : '#9ca3af', // Red for directive, Gray for communication
         strokeWidth: conn.type === 'directive' ? 2 : 1,
-        strokeDasharray: conn.type === 'communication' ? '5 5' : undefined, // Dotted line for communication
+        strokeDasharray: conn.type === 'communication' ? '4 4' : undefined, // Dotted line for communication
+        opacity: conn.type === 'directive' ? 0.9 : 0.5,
       },
+      // Add arrow heads to connections
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        width: 15,
-        height: 15,
+        width: conn.type === 'directive' ? 15 : 12,
+        height: conn.type === 'directive' ? 15 : 12,
         color: conn.type === 'directive' ? '#ef4444' : '#9ca3af',
       },
+      // Choose connection points based on type
+      sourceHandle: conn.type === 'directive' ? 'top' : 'bottom',
+      targetHandle: conn.type === 'directive' ? 'top' : 'bottom',
     }));
   }, [orgConnections]);
 

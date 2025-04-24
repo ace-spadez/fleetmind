@@ -50,7 +50,7 @@ const DocumentationModule = () => {
       <div className="flex-1 flex flex-col bg-[hsl(var(--dark-9))]">
         {/* Document Header */}
         {activeDocument ? (
-          <div className="h-14 border-b border-[hsl(var(--dark-7))] flex items-center px-4">
+          <div className="h-14 border-b border-gray-700/50 flex items-center px-4">
             <div className="flex items-center">
               <FileText className="text-[hsl(var(--dark-2))] mr-2" size={18} />
               <h3 className="font-medium text-white">{activeDocument.name}</h3>
@@ -66,7 +66,7 @@ const DocumentationModule = () => {
             </div>
           </div>
         ) : (
-          <div className="h-14 border-b border-[hsl(var(--dark-7))] flex items-center px-4">
+          <div className="h-14 border-b border-gray-700/50 flex items-center px-4">
             <h3 className="font-medium text-white">No document selected</h3>
             <button 
               className="ml-auto text-[hsl(var(--dark-2))] hover:text-white"

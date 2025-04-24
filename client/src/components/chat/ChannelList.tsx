@@ -24,9 +24,9 @@ const ChannelList = () => {
   };
 
   return (
-    <div className="w-64 bg-[hsl(var(--discord-9))] flex flex-col border-r border-[hsl(var(--dark-7))]">
+    <div className="w-64 bg-[hsl(var(--discord-9))] flex flex-col border-r border-gray-700/50">
       {/* Server/Workspace Name */}
-      <div className="p-4 border-b border-[hsl(var(--dark-7))] flex items-center">
+      <div className="p-4 border-b border-gray-700/50 flex items-center">
         <h2 className="font-semibold text-white">Workspace</h2>
         <ChevronDown className="ml-auto text-[hsl(var(--dark-2))]" size={18} />
       </div>
