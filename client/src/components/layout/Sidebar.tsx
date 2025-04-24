@@ -5,15 +5,14 @@ import { Module } from "@/types";
 import { 
   Home, 
   NotebookText, 
-  Code, 
   PieChart, 
   DollarSign, 
   Settings,
-  Users,
   Sun,
   Moon,
   BotMessageSquare,
-  Terminal
+  Terminal,
+  Network
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -29,7 +28,7 @@ const Sidebar = () => {
     { id: "docs", icon: <NotebookText size={18} />, module: "docs" as Module },
     { id: "code", icon: <Terminal size={18} />, module: "code" as Module },
     { id: "chart", icon: <PieChart size={18} />, module: "chart" as Module },
-    { id: "organization", icon: <Users size={18} />, module: "organization" as Module },
+    { id: "organization", icon: <Network size={18} />, module: "organization" as Module },
     { id: "budget", icon: <DollarSign size={18} />, module: "budget" as Module },
   ];
 
