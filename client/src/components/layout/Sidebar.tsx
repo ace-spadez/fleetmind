@@ -59,11 +59,21 @@ const Sidebar = () => {
         ))}
       </div>
 
+      {/* Theme toggle button */}
+      <IconButton
+        variant="default"
+        onClick={toggleTheme}
+        className="mt-auto mb-3"
+        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+      </IconButton>
+      
       {/* Settings button at bottom */}
       <IconButton
         variant={activeModule === "settings" ? "active" : "default"}
         onClick={() => handleModuleClick("settings")}
-        className="mt-auto"
         aria-label="settings"
       >
         <Settings size={18} />
