@@ -90,39 +90,54 @@ const BotNode = ({ data, selected, id }: NodeProps<BotNodeData>) => {
     <div 
       className={`p-0 rounded-md border shadow-lg min-w-[180px] relative transition-all duration-300
         ${config.bgColor} ${config.color} overflow-hidden
-        ${selected ? '!border-orange-500 shadow-orange-500/20' : activeBotId === id ? '!border-primary shadow-primary/20' : ''}`}
+        ${selected ? '!border-orange-500 shadow-orange-500/20' : ''}`}
     >
       {/* Active border effect */}
       {activeBotId === id && (
-        <div className="absolute inset-0 rounded-md border border-primary/50 animate-pulse pointer-events-none"></div>
+        <div className="absolute inset-0 rounded-md border-2 border-primary/80 animate-pulse pointer-events-none"></div>
+      )}
+      
+      {/* Pulsating border effect for active bots */}
+      {isActive && (
+        <div className="absolute inset-0 rounded-md border-2 border-opacity-50 pointer-events-none pulsate-border"
+          style={{
+            borderColor: isDarkMode ? 
+              `${activeBotId === id ? 'rgb(var(--primary))' : config.color.includes('border-') ? config.color.replace('border-', 'rgb(') + ')' : 'rgba(107, 114, 128, 0.5)'}` : 
+              `${activeBotId === id ? 'rgb(var(--primary))' : 'rgba(107, 114, 128, 0.5)'}`
+          }}
+        ></div>
       )}
       
       {/* Directive and communication handles */}
       <Handle
         type="target"
         position={Position.Left}
-        style={{ top: '35%', background: '#ef4444', width: '8px', height: '8px' }}
+        id="directiveTarget"
+        style={{ top: '35%', background: '#ef4444', width: '10px', height: '10px' }}
         isConnectable={true}
         className="!border-2 !border-red-950"
       />
       <Handle
         type="source"
         position={Position.Right}
-        style={{ top: '35%', background: '#ef4444', width: '8px', height: '8px' }}
+        id="directiveSource"
+        style={{ top: '35%', background: '#ef4444', width: '10px', height: '10px' }}
         isConnectable={true}
         className="!border-2 !border-red-950"
       />
       <Handle
         type="target"
         position={Position.Left}
-        style={{ top: '75%', background: '#9ca3af', width: '8px', height: '8px' }}
+        id="communicationTarget"
+        style={{ top: '75%', background: '#9ca3af', width: '10px', height: '10px' }}
         isConnectable={true}
         className="!border-2 !border-gray-800"
       />
       <Handle
         type="source"
         position={Position.Right}
-        style={{ top: '75%', background: '#9ca3af', width: '8px', height: '8px' }}
+        id="communicationSource"
+        style={{ top: '75%', background: '#9ca3af', width: '10px', height: '10px' }}
         isConnectable={true}
         className="!border-2 !border-gray-800"
       />

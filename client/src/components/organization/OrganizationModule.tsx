@@ -125,9 +125,9 @@ const OrganizationModule = () => {
         height: conn.type === 'directive' ? 15 : 12,
         color: conn.type === 'directive' ? '#ef4444' : '#9ca3af',
       },
-      // Choose connection points based on type
-      sourceHandle: conn.type === 'directive' ? 'top' : 'bottom',
-      targetHandle: conn.type === 'directive' ? 'top' : 'bottom',
+      // Choose connection points based on type - use proper handle IDs
+      sourceHandle: conn.type === 'directive' ? 'directiveSource' : 'communicationSource',
+      targetHandle: conn.type === 'directive' ? 'directiveTarget' : 'communicationTarget',
     }));
   }, [orgConnections]);
 

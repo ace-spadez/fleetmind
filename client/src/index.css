@@ -154,12 +154,28 @@
   }
 }
 
+@keyframes pulsateBorder {
+  0% {
+    border-color: rgba(107, 114, 128, 0.2);
+  }
+  50% {
+    border-color: rgba(107, 114, 128, 0.8);
+  }
+  100% {
+    border-color: rgba(107, 114, 128, 0.2);
+  }
+}
+
 .animate-ping {
   animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.pulsate-border {
+  animation: pulsateBorder 2s ease-in-out infinite;
 }
 
 .planet {

@@ -19,6 +19,8 @@ export type Channel = {
   botId?: string;
   type: 'primary' | 'directive';
   active?: boolean;
+  botType?: string;
+  isActive?: boolean;
 };
 
 export type Message = {
