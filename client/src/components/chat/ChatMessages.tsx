@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Message } from "@/types";
 import { formatDate } from "@/lib/utils";
-import { Bot } from "lucide-react";
+import { Bot, MessageSquareText } from "lucide-react";
 
 type ChatMessagesProps = {
   messages: Message[];
@@ -38,7 +38,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
             }`}
           >
             {message.sender === 'bot' ? (
-              <Bot size={20} />
+              <MessageSquareText size={18} />
             ) : (
               <span className="font-medium">U</span>
             )}

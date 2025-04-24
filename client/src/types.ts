@@ -59,3 +59,22 @@ export type TreeNode = {
   expanded?: boolean;
   active?: boolean;
 };
+
+export type BotRole = 'ceo' | 'vp' | 'manager' | 'developer';
+
+export type OrgBot = {
+  id: string;
+  name: string;
+  role: BotRole;
+  description?: string;
+  position?: { x: number, y: number };
+};
+
+export type ConnectionType = 'directive' | 'communication';
+
+export type BotConnection = {
+  id: string;
+  source: string;
+  target: string;
+  type: ConnectionType;
+};

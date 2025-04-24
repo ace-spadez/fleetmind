@@ -1,8 +1,10 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { Module, ChatData, File, TreeNode, Message } from "../types";
+import { Module, ChatData, File, TreeNode, Message, OrgBot, BotConnection } from "../types";
 import { mockChats } from "../data/mockChats";
 import { mockDocuments } from "../data/mockDocuments";
 import { mockCode } from "../data/mockCode";
+import { mockOrgBots } from "../data/mockOrgBots";
+import { mockOrgConnections } from "../data/mockOrgConnections";
 
 interface WorkspaceContextType {
   activeModule: Module;
@@ -21,6 +23,12 @@ interface WorkspaceContextType {
   setCodeFiles: (files: TreeNode[]) => void;
   activeCodeFileId: string | null;
   setActiveCodeFileId: (id: string | null) => void;
+  orgBots: OrgBot[];
+  setOrgBots: (bots: OrgBot[]) => void;
+  orgConnections: BotConnection[];
+  setOrgConnections: (connections: BotConnection[]) => void;
+  activeBotId: string | null;
+  setActiveBotId: (id: string | null) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -35,6 +43,11 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>("overview");
   const [codeFiles, setCodeFiles] = useState<TreeNode[]>(mockCode);
   const [activeCodeFileId, setActiveCodeFileId] = useState<string | null>("solarsystem");
+  
+  // Organization state
+  const [orgBots, setOrgBots] = useState<OrgBot[]>(mockOrgBots);
+  const [orgConnections, setOrgConnections] = useState<BotConnection[]>(mockOrgConnections);
+  const [activeBotId, setActiveBotId] = useState<string | null>(null);
 
   const addMessage = (channelId: string, content: string, isBotMessage: boolean) => {
     setChats(prev => {
@@ -138,7 +151,13 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         codeFiles,
         setCodeFiles,
         activeCodeFileId,
-        setActiveCodeFileId
+        setActiveCodeFileId,
+        orgBots,
+        setOrgBots,
+        orgConnections,
+        setOrgConnections,
+        activeBotId,
+        setActiveBotId
       }}
     >
       {children}

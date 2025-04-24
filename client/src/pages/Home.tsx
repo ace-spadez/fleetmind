@@ -3,6 +3,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import ChatModule from "@/components/chat/ChatModule";
 import DocumentationModule from "@/components/documentation/DocumentationModule";
 import CodeModule from "@/components/code/CodeModule";
+import OrganizationModule from "@/components/organization/OrganizationModule";
 import { useTheme } from "@/context/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Sun, Moon } from "lucide-react";
@@ -26,6 +27,7 @@ export default function Home() {
             </div>
           </div>
         )}
+        {activeModule === "organization" && <OrganizationModule />}
         {(activeModule === "chart" || activeModule === "budget" || activeModule === "settings") && (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">

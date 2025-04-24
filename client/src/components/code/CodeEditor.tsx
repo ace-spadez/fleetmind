@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 type CodeEditorProps = {
   fileName: string;
@@ -6,6 +6,8 @@ type CodeEditorProps = {
 
 const CodeEditor = ({ fileName }: CodeEditorProps) => {
   const [code, setCode] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     // Load different code based on file extension
@@ -15,22 +17,80 @@ const CodeEditor = ({ fileName }: CodeEditorProps) => {
       setCode(`// JavaScript code for ${fileName}\n\nconst main = () => {\n  console.log("Hello from ${fileName}");\n};\n\nmain();`);
     } else if (fileName.endsWith('.json')) {
       setCode(`{\n  "name": "solar-system-simulator",\n  "version": "1.0.0",\n  "description": "An educational solar system simulator",\n  "main": "index.js",\n  "scripts": {\n    "start": "react-scripts start",\n    "build": "react-scripts build"\n  }\n}`);
+    } else if (fileName.endsWith('.ts')) {
+      setCode(`// TypeScript code for ${fileName}\n\nconst main = (): void => {\n  console.log("Hello from ${fileName}");\n};\n\nmain();`);
+    } else if (fileName.endsWith('.tsx')) {
+      setCode(`// TSX code for ${fileName}\n\nimport React from 'react';\n\ninterface Props {\n  name: string;\n}\n\nconst Component: React.FC<Props> = ({ name }) => {\n  return <div>Hello, {name}!</div>;\n};\n\nexport default Component;`);
+    } else if (fileName.endsWith('.css')) {
+      setCode(`/* CSS for ${fileName} */\n\nbody {\n  margin: 0;\n  padding: 0;\n  font-family: sans-serif;\n}\n\n.container {\n  max-width: 1200px;\n  margin: 0 auto;\n  padding: 1rem;\n}`);
     } else {
       setCode(`// Code for ${fileName}\n`);
     }
   }, [fileName]);
   
+  useEffect(() => {
+    updateLineNumbers();
+  }, [code]);
+  
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCode(e.target.value);
   };
   
+  const updateLineNumbers = () => {
+    if (!lineNumbersRef.current) return;
+    
+    const lines = code.split('\n');
+    lineNumbersRef.current.innerHTML = Array(lines.length)
+      .fill(0)
+      .map((_, i) => `<div>${i + 1}</div>`)
+      .join('');
+  };
+  
+  const handleTabKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const target = e.target as HTMLTextAreaElement;
+      const start = target.selectionStart;
+      const end = target.selectionEnd;
+      
+      const newText = code.substring(0, start) + "  " + code.substring(end);
+      setCode(newText);
+      
+      // Set cursor position after the inserted tab
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = start + 2;
+          textareaRef.current.selectionEnd = start + 2;
+        }
+      }, 0);
+    }
+  };
+  
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
+    }
+  };
+  
   return (
-    <div className="flex-1 overflow-y-auto p-4 code-editor">
+    <div className="flex-1 overflow-y-auto p-0 code-editor bg-[#1e1e1e] flex">
+      <div 
+        ref={lineNumbersRef} 
+        className="line-numbers text-gray-500 p-2 text-right pr-3 border-r border-gray-700 bg-[#252525] overflow-hidden"
+        style={{ minWidth: '3rem' }}
+      />
       <textarea
+        ref={textareaRef}
         value={code}
         onChange={handleCodeChange}
-        className="w-full h-full bg-transparent text-[hsl(var(--dark-1))] text-sm font-mono focus:outline-none resize-none"
+        onKeyDown={handleTabKey}
+        onScroll={handleScroll}
+        className="w-full bg-[#1e1e1e] text-gray-200 p-2 resize-none border-none outline-none font-mono text-sm"
         spellCheck="false"
+        style={{
+          lineHeight: '1.6',
+          tabSize: 2,
+        }}
       />
     </div>
   );

@@ -160,6 +160,18 @@
   font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
 }
 
+/* Code editor with line numbers */
+.line-numbers {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  user-select: none;
+}
+
+.line-numbers div {
+  padding: 0 0.5em;
+}
+
 .planet {
   transition: transform 0.3s ease;
 }
