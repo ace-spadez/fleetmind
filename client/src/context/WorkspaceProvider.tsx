@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { Module, ChatData, File, TreeNode } from "../types";
+import { Module, ChatData, File, TreeNode, Message } from "../types";
 import { mockChats } from "../data/mockChats";
 import { mockDocuments } from "../data/mockDocuments";
 import { mockCode } from "../data/mockCode";

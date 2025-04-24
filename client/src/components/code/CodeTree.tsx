@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useWorkspace } from "@/context/WorkspaceProvider";
 import { TreeNode } from "@/types";
-import { ChevronDown, ChevronRight, Folder, FileCode, FileJson, File } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, FileCode, FileJson, File, GitBranch } from "lucide-react";
 
 type CodeTreeProps = {
   codeFiles: TreeNode[];
