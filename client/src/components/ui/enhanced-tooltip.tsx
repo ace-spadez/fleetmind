@@ -25,15 +25,18 @@ const EnhancedTooltip = ({
       <TooltipTrigger asChild>{trigger}</TooltipTrigger>
       <TooltipContent
         side={side}
-        sideOffset={5}
-        className="flex flex-col bg-[#303135] text-white border-gray-700 shadow-md p-0 rounded-md w-72 overflow-hidden"
+        sideOffset={12}
+        className="flex flex-col bg-[#303135] text-white border border-[#3a3a3f] shadow-xl p-0 rounded-lg w-60 overflow-hidden"
+        style={{
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)"
+        }}
       >
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-700/50">
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-[#3a3a3f]">
           {icon && <div className="text-blue-400">{icon}</div>}
-          <span className="text-base font-medium">{title}</span>
+          <span className="text-sm font-medium">{title}</span>
         </div>
         {description && (
-          <div className="px-4 py-3 text-sm text-gray-300">{description}</div>
+          <div className="px-3 py-2 text-xs text-gray-300">{description}</div>
         )}
         {children}
       </TooltipContent>

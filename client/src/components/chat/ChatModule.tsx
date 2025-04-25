@@ -5,14 +5,39 @@ import DirectiveBusChat from "./DirectiveBusChat";
 import UserProfile from "./UserProfile";
 import { useWorkspace } from "@/context/WorkspaceProvider";
 import { Hash, Users, Bell, Pin, Search, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Message } from "@/types";
 
 const ChatModule = () => {
-  const { activeChannelId, chats } = useWorkspace();
+  const { activeChannelId, chats, addMessage } = useWorkspace();
+  const [initialized, setInitialized] = useState<{[key: string]: boolean}>({});
   
+  // Find active chat - create default messages for primary bot channels if needed
   const activeChat = chats.find(chat => chat.channelId === activeChannelId);
   
   // Check if this is a directive bus channel
   const isDirectiveBus = activeChannelId.includes('to-');
+
+  // Initialize chat with default messages if not already existing
+  useEffect(() => {
+    // Only for primary bot channels and only once per channel
+    if (!isDirectiveBus && !initialized[activeChannelId]) {
+      if (!activeChat || activeChat.messages.length === 0) {
+        // Set initial user message
+        const initialUserMessage = `Hello ${activeChannelId}, can you help me with my project?`;
+        addMessage(activeChannelId, initialUserMessage, false);
+        
+        // Set bot response after a short delay
+        setTimeout(() => {
+          const botResponse = `Hi there! I'm ${activeChannelId}, and I'm ready to assist you with your project. What would you like to work on today?`;
+          addMessage(activeChannelId, botResponse, true);
+        }, 800);
+        
+        // Mark as initialized
+        setInitialized(prev => ({...prev, [activeChannelId]: true}));
+      }
+    }
+  }, [activeChannelId, activeChat, addMessage, isDirectiveBus, initialized]);
   
   // Extract source and target bot IDs for directive buses
   const getDirectiveBusInfo = () => {

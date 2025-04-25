@@ -103,7 +103,7 @@ const Sidebar = () => {
               trigger={
                 <IconButton
                   className="relative"
-                  variant={activeModule === item.module ? "active" : "default"}
+                  variant={"default"}
                   onClick={() => handleModuleClick(item.module)}
                   aria-label={item.id}
                 >
