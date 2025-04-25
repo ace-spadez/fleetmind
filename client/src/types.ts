@@ -60,6 +60,7 @@ export type TreeNode = {
   path: string;
   expanded?: boolean;
   active?: boolean;
+  content?: string;
 };
 
 export type BotRole = 'ceo' | 'vp' | 'manager' | 'developer';

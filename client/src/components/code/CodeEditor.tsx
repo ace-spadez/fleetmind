@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 
 type CodeEditorProps = {
-  fileName: string;
+  fileId: string;
+  filename: string;
+  content?: string;
 };
 
-const CodeEditor = ({ fileName }: CodeEditorProps) => {
+const CodeEditor = ({ fileId, filename, content }: CodeEditorProps) => {
   const [code, setCode] = useState("");
   const [highlightedCode, setHighlightedCode] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -12,41 +14,46 @@ const CodeEditor = ({ fileName }: CodeEditorProps) => {
   const highlightedCodeRef = useRef<HTMLDivElement>(null);
   
   // Get file type/language from extension
-  const getLanguage = (fileName: string): string => {
-    if (fileName.endsWith('.jsx')) return 'jsx';
-    if (fileName.endsWith('.js')) return 'javascript';
-    if (fileName.endsWith('.ts')) return 'typescript';
-    if (fileName.endsWith('.tsx')) return 'tsx';
-    if (fileName.endsWith('.json')) return 'json';
-    if (fileName.endsWith('.css')) return 'css';
-    if (fileName.endsWith('.html')) return 'html';
+  const getLanguage = (filename: string): string => {
+    if (filename.endsWith('.jsx')) return 'jsx';
+    if (filename.endsWith('.js')) return 'javascript';
+    if (filename.endsWith('.ts')) return 'typescript';
+    if (filename.endsWith('.tsx')) return 'tsx';
+    if (filename.endsWith('.json')) return 'json';
+    if (filename.endsWith('.css')) return 'css';
+    if (filename.endsWith('.html')) return 'html';
     return 'plaintext';
   };
   
   useEffect(() => {
-    // Load different code based on file extension
-    if (fileName.endsWith('.jsx')) {
-      setCode(solarSystemCode);
-    } else if (fileName.endsWith('.js')) {
-      setCode(`// JavaScript code for ${fileName}\n\nconst main = () => {\n  console.log("Hello from ${fileName}");\n};\n\nmain();`);
-    } else if (fileName.endsWith('.json')) {
-      setCode(`{\n  "name": "solar-system-simulator",\n  "version": "1.0.0",\n  "description": "An educational solar system simulator",\n  "main": "index.js",\n  "scripts": {\n    "start": "react-scripts start",\n    "build": "react-scripts build"\n  }\n}`);
-    } else if (fileName.endsWith('.ts')) {
-      setCode(`// TypeScript code for ${fileName}\n\nconst main = (): void => {\n  console.log("Hello from ${fileName}");\n};\n\nmain();`);
-    } else if (fileName.endsWith('.tsx')) {
-      setCode(`// TSX code for ${fileName}\n\nimport React from 'react';\n\ninterface Props {\n  name: string;\n}\n\nconst Component: React.FC<Props> = ({ name }) => {\n  return <div>Hello, {name}!</div>;\n};\n\nexport default Component;`);
-    } else if (fileName.endsWith('.css')) {
-      setCode(`/* CSS for ${fileName} */\n\nbody {\n  margin: 0;\n  padding: 0;\n  font-family: sans-serif;\n}\n\n.container {\n  max-width: 1200px;\n  margin: 0 auto;\n  padding: 1rem;\n}`);
+    // Use provided content if available, otherwise load default content based on extension
+    if (content) {
+      setCode(content);
     } else {
-      setCode(`// Code for ${fileName}\n`);
+      // Load different code based on file extension
+      if (filename.endsWith('.jsx')) {
+        setCode(solarSystemCode);
+      } else if (filename.endsWith('.js')) {
+        setCode(`// JavaScript code for ${filename}\n\nconst main = () => {\n  console.log("Hello from ${filename}");\n};\n\nmain();`);
+      } else if (filename.endsWith('.json')) {
+        setCode(`{\n  "name": "solar-system-simulator",\n  "version": "1.0.0",\n  "description": "An educational solar system simulator",\n  "main": "index.js",\n  "scripts": {\n    "start": "react-scripts start",\n    "build": "react-scripts build"\n  }\n}`);
+      } else if (filename.endsWith('.ts')) {
+        setCode(`// TypeScript code for ${filename}\n\nconst main = (): void => {\n  console.log("Hello from ${filename}");\n};\n\nmain();`);
+      } else if (filename.endsWith('.tsx')) {
+        setCode(`// TSX code for ${filename}\n\nimport React from 'react';\n\ninterface Props {\n  name: string;\n}\n\nconst Component: React.FC<Props> = ({ name }) => {\n  return <div>Hello, {name}!</div>;\n};\n\nexport default Component;`);
+      } else if (filename.endsWith('.css')) {
+        setCode(`/* CSS for ${filename} */\n\nbody {\n  margin: 0;\n  padding: 0;\n  font-family: sans-serif;\n}\n\n.container {\n  max-width: 1200px;\n  margin: 0 auto;\n  padding: 1rem;\n}`);
+      } else {
+        setCode(`// Code for ${filename}\n`);
+      }
     }
-  }, [fileName]);
+  }, [filename, content, fileId]);
   
   // Apply basic syntax highlighting
   useEffect(() => {
     updateLineNumbers();
     
-    const language = getLanguage(fileName);
+    const language = getLanguage(filename);
     
     // This is a simple regex-based syntax highlighter
     let highlighted = code
@@ -99,7 +106,7 @@ const CodeEditor = ({ fileName }: CodeEditorProps) => {
     highlighted = highlighted.replace(/\n/g, '<br>');
     
     setHighlightedCode(highlighted);
-  }, [code, fileName]);
+  }, [code, filename]);
   
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCode(e.target.value);

@@ -1,0 +1,27 @@
+/* Tab transitions */
+.tab-transition {
+  transition: transform 0.2s ease;
+}
+
+/* Hide scrollbar for tabs container while keeping functionality */
+.scrollbar-hidden::-webkit-scrollbar {
+  height: 0;
+  width: 0;
+  background: transparent;
+}
+
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Tab drag styles */
+.tab-dragging {
+  opacity: 0.6;
+  z-index: 10;
+}
+
+.tab-drag-over {
+  transform: translateX(3px);
+  transition: transform 0.2s ease;
+} 

@@ -1,15 +1,10 @@
-import { useState, useEffect } from "react";
-import { X, Plus, ArrowRight, Trash2, PencilLine, Check, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect, useRef } from "react";
+import { ArrowRight, Trash2, PencilLine, Info, Send, ChevronDown, ChevronUp, AlertTriangle, Terminal, CornerDownRight, ExternalLink, Pause, Play } from "lucide-react";
 
 type Instruction = {
   id: string;
   text: string;
-  isEditing?: boolean;
-  priority: 'high' | 'medium' | 'low';
-  status: 'active' | 'pending' | 'complete';
+  context: string;
   source: string;
   target: string;
 };
@@ -28,24 +23,21 @@ const mockInstructions: Instruction[] = [
   {
     id: generateId(),
     text: "Analyze user requirements and create component specifications",
-    priority: "high",
-    status: "active",
+    context: `# User Requirements Analysis\n\n## User Stories\n- As a user, I want to filter products by category\n- As a user, I want to search for products by name\n- As a user, I want to save items to a wishlist\n\n## Acceptance Criteria\n- Filter function shows only products from selected category\n- Search returns products with names containing search term\n- Wishlist persists between sessions\n\n## Technical Considerations\n- Implement client-side filtering for performance\n- Consider search optimization for large product catalogs\n- Use local storage for wishlist persistence`,
     source: "swift-eagle-9042",
     target: "creative-owl-7238"
   },
   {
     id: generateId(),
     text: "Design UI components according to specifications and brand guidelines",
-    priority: "medium",
-    status: "pending",
+    context: `# UI Component Design\n\n## Brand Guidelines\n- Primary color: #3E63DD\n- Secondary color: #1B2559\n- Font: Inter, sans-serif\n\n## Components Needed\n- ProductCard\n- FilterSidebar\n- SearchBar\n- WishlistButton\n\n## Design Principles\n- Maintain consistent spacing (8px grid)\n- Ensure all interactive elements have hover/focus states\n- Components should be responsive for mobile, tablet, and desktop`,
     source: "swift-eagle-9042",
     target: "creative-owl-7238"
   },
   {
     id: generateId(),
     text: "Optimize component rendering for performance improvements",
-    priority: "low",
-    status: "complete",
+    context: `# Performance Optimization\n\n## Current Issues\n- ProductList re-renders too frequently\n- Search function has high latency on large datasets\n- Page load time exceeds 2s on mobile devices\n\n## Optimization Strategies\n- Implement React.memo for ProductCard components\n- Add debounce to search input (300ms)\n- Virtualize long product lists using react-window\n- Implement code splitting to reduce initial bundle size\n\n## Expected Outcomes\n- Reduce re-renders by 60%\n- Improve search response time to under 100ms\n- Achieve page load under 1.5s on 3G connections`,
     source: "swift-eagle-9042",
     target: "creative-owl-7238"
   }
@@ -53,52 +45,105 @@ const mockInstructions: Instruction[] = [
 
 const DirectiveBusChat = ({ channelId, sourceBotId, targetBotId }: DirectiveBusChatProps) => {
   const [instructions, setInstructions] = useState<Instruction[]>([]);
-  const [newInstruction, setNewInstruction] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [expandedContexts, setExpandedContexts] = useState<Record<string, boolean>>({});
+  const [editingContext, setEditingContext] = useState<string | null>(null);
+  const [editContextText, setEditContextText] = useState("");
+  const [isPaused, setIsPaused] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   
-  // Initialize with example data
+  // Initialize with mock data
   useEffect(() => {
     setInstructions(mockInstructions);
   }, []);
   
-  // Add new instruction
-  const handleAddInstruction = () => {
-    if (newInstruction.trim() === "") return;
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [instructions, editingId]);
+  
+  // Add new instruction from chat input
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newMessage.trim() === "") return;
     
     const instruction: Instruction = {
       id: generateId(),
-      text: newInstruction,
-      priority: "medium",
-      status: "pending",
+      text: newMessage,
+      context: "# New Directive Context\n\nAdd detailed specifications and requirements for this directive.",
       source: sourceBotId,
       target: targetBotId
     };
     
     setInstructions([...instructions, instruction]);
-    setNewInstruction("");
-    setIsAdding(false);
+    setNewMessage("");
+  };
+  
+  // Toggle context expansion
+  const toggleContext = (id: string) => {
+    setExpandedContexts(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
   };
   
   // Start editing an instruction
-  const startEditing = (id: string) => {
-    setInstructions(
-      instructions.map(instruction => 
-        instruction.id === id 
-          ? { ...instruction, isEditing: true } 
-          : { ...instruction, isEditing: false }
-      )
-    );
+  const startEditing = (instruction: Instruction) => {
+    setEditingId(instruction.id);
+    setEditText(instruction.text);
   };
   
   // Save edited instruction
-  const saveInstruction = (id: string, newText: string) => {
+  const saveEdit = () => {
+    if (!editingId) return;
+    
     setInstructions(
       instructions.map(instruction => 
-        instruction.id === id 
-          ? { ...instruction, text: newText, isEditing: false } 
+        instruction.id === editingId 
+          ? { ...instruction, text: editText } 
           : instruction
       )
     );
+    
+    setEditingId(null);
+    setEditText("");
+  };
+  
+  // Cancel editing
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+  
+  // Start editing context
+  const startEditingContext = (instruction: Instruction) => {
+    setEditingContext(instruction.id);
+    setEditContextText(instruction.context);
+  };
+  
+  // Save edited context
+  const saveContextEdit = () => {
+    if (!editingContext) return;
+    
+    setInstructions(
+      instructions.map(instruction => 
+        instruction.id === editingContext 
+          ? { ...instruction, context: editContextText } 
+          : instruction
+      )
+    );
+    
+    setEditingContext(null);
+    setEditContextText("");
+  };
+  
+  // Cancel context editing
+  const cancelContextEdit = () => {
+    setEditingContext(null);
+    setEditContextText("");
   };
   
   // Delete instruction
@@ -106,224 +151,197 @@ const DirectiveBusChat = ({ channelId, sourceBotId, targetBotId }: DirectiveBusC
     setInstructions(instructions.filter(instruction => instruction.id !== id));
   };
   
-  // Change instruction priority
-  const togglePriority = (id: string) => {
-    const priorities: ('high' | 'medium' | 'low')[] = ['high', 'medium', 'low'];
-    
-    setInstructions(
-      instructions.map(instruction => {
-        if (instruction.id === id) {
-          const currentIndex = priorities.indexOf(instruction.priority);
-          const nextIndex = (currentIndex + 1) % priorities.length;
-          return { ...instruction, priority: priorities[nextIndex] };
-        }
-        return instruction;
-      })
-    );
-  };
-  
-  // Change instruction status
-  const toggleStatus = (id: string) => {
-    const statuses: ('active' | 'pending' | 'complete')[] = ['active', 'pending', 'complete'];
-    
-    setInstructions(
-      instructions.map(instruction => {
-        if (instruction.id === id) {
-          const currentIndex = statuses.indexOf(instruction.status);
-          const nextIndex = (currentIndex + 1) % statuses.length;
-          return { ...instruction, status: statuses[nextIndex] };
-        }
-        return instruction;
-      })
-    );
-  };
-  
-  // Get color for priority
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return "bg-red-500/20 text-red-300 border-red-500/30";
-      case 'medium': return "bg-amber-500/20 text-amber-300 border-amber-500/30";
-      case 'low': return "bg-blue-500/20 text-blue-300 border-blue-500/30";
-      default: return "bg-gray-500/20 text-gray-300 border-gray-500/30";
-    }
-  };
-  
-  // Get color for status
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return "bg-green-500/20 text-green-300 border-green-500/30";
-      case 'pending': return "bg-amber-500/20 text-amber-300 border-amber-500/30";
-      case 'complete': return "bg-blue-500/20 text-blue-300 border-blue-500/30";
-      default: return "bg-gray-500/20 text-gray-300 border-gray-500/30";
-    }
+  // Toggle pause/play
+  const togglePausePlay = () => {
+    setIsPaused(!isPaused);
   };
   
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex-1 flex flex-col h-full bg-gray-900">
       {/* Header with connection info */}
-      <div className="p-3 border-b border-gray-700/50 bg-gray-900/30 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Info size={14} className="text-gray-400" />
-          <h3 className="text-sm font-medium">Directive Bus</h3>
+      <div className="p-3 border-b border-red-800/50 bg-gray-900 flex items-center justify-between">
+        <div className="flex items-center">
+          <AlertTriangle size={14} className="text-red-500 mr-2" />
+          <h3 className="text-sm font-medium mr-2 text-red-400">DIRECTIVE BUS</h3>
           <div className="flex items-center text-xs text-gray-400">
-            <span className="text-blue-400">{sourceBotId}</span>
-            <ArrowRight size={12} className="mx-1" />
-            <span className="text-green-400">{targetBotId}</span>
+            <span className="text-blue-400 font-mono">{sourceBotId}</span>
+            <ArrowRight size={12} className="mx-1 text-gray-600" />
+            <span className="text-green-400 font-mono">{targetBotId}</span>
           </div>
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="h-6 text-xs px-2 flex items-center gap-1 bg-blue-900/20 hover:bg-blue-800/30 text-blue-300"
-          onClick={() => setIsAdding(true)}
+        <button
+          className={`p-1.5 rounded ${isPaused ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'} hover:bg-opacity-50`}
+          onClick={togglePausePlay}
+          title={isPaused ? "Resume directive bus" : "Pause directive bus"}
         >
-          <Plus size={14} />
-          <span>Add</span>
-        </Button>
+          {isPaused ? <Play size={14} /> : <Pause size={14} />}
+        </button>
       </div>
       
       {/* Instructions list */}
-      <div className="flex-1 p-3 overflow-y-auto space-y-3">
+      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-900">
         {instructions.length === 0 ? (
-          <div className="text-center py-6 text-gray-400 text-sm">
-            <p>No instructions in this directive bus.</p>
-            <p className="text-xs mt-1">Add instructions using the button above.</p>
+          <div className="text-center py-10 text-gray-400 text-sm">
+            <Terminal className="mx-auto text-gray-600 mb-2" size={24} />
+            <p>No active directives in this command bus.</p>
+            <p className="text-xs mt-1">Issue new directives using the command input below.</p>
           </div>
         ) : (
-          instructions.map((instruction) => (
-            <div key={instruction.id} className="bg-gray-800/30 rounded-md border border-gray-700/50 overflow-hidden">
-              {instruction.isEditing ? (
+          instructions.map((instruction, index) => (
+            <div key={instruction.id} className="rounded-md overflow-hidden border border-gray-700/50 bg-gray-800/20">
+              {editingId === instruction.id ? (
                 <div className="p-3">
-                  <Input
-                    defaultValue={instruction.text}
-                    className="bg-gray-900/50 border-gray-700 text-gray-200 text-xs mb-2"
+                  <div className="flex items-center mb-2">
+                    <span className="text-xs font-mono text-gray-500 mr-2">EDIT DIRECTIVE #{index + 1}</span>
+                  </div>
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    className="w-full bg-gray-900/80 border border-gray-700 rounded p-2 text-gray-200 text-sm mb-2 resize-none"
+                    rows={2}
                     autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        saveInstruction(instruction.id, e.currentTarget.value);
-                      } else if (e.key === 'Escape') {
-                        setInstructions(
-                          instructions.map(i => i.id === instruction.id ? { ...i, isEditing: false } : i)
-                        );
-                      }
-                    }}
                   />
-                  <div className="flex justify-end gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 text-xs bg-green-900/20 text-green-400 hover:bg-green-900/30"
-                      onClick={(e) => {
-                        const input = e.currentTarget.parentElement?.previousElementSibling as HTMLInputElement;
-                        saveInstruction(instruction.id, input?.value || instruction.text);
-                      }}
+                  <div className="flex justify-end space-x-2">
+                    <button 
+                      className="px-3 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded border border-gray-700"
+                      onClick={cancelEdit}
                     >
-                      <Check size={12} />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700"
-                      onClick={() => {
-                        setInstructions(
-                          instructions.map(i => i.id === instruction.id ? { ...i, isEditing: false } : i)
-                        );
-                      }}
+                      CANCEL
+                    </button>
+                    <button 
+                      className="px-3 py-1 text-xs bg-red-900/80 hover:bg-red-800 text-red-300 rounded border border-red-800"
+                      onClick={saveEdit}
                     >
-                      <X size={12} />
-                    </Button>
+                      UPDATE
+                    </button>
                   </div>
                 </div>
               ) : (
-                <>
+                <div className="flex flex-col">
                   <div className="p-3">
-                    <p className="text-xs text-gray-200">{instruction.text}</p>
-                  </div>
-                  <div className="p-2 border-t border-gray-700/50 bg-gray-800/50 flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <Badge 
-                        variant="outline" 
-                        className={`text-[10px] py-0 h-4 ${getPriorityColor(instruction.priority)}`}
-                        onClick={() => togglePriority(instruction.id)}
-                      >
-                        {instruction.priority}
-                      </Badge>
-                      <Badge 
-                        variant="outline" 
-                        className={`text-[10px] py-0 h-4 ${getStatusColor(instruction.status)}`}
-                        onClick={() => toggleStatus(instruction.id)}
-                      >
-                        {instruction.status}
-                      </Badge>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Terminal size={12} className="text-red-500 mr-1" />
+                        <span className="text-xs font-mono text-gray-500">DIRECTIVE #{index + 1}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 font-mono mr-1">
+                          {new Date().toISOString().split('T')[0]}
+                        </span>
+                        <button 
+                          className="p-1 text-gray-500 hover:text-blue-400 hover:bg-gray-800 rounded"
+                          onClick={() => startEditing(instruction)}
+                          title="Edit directive"
+                        >
+                          <PencilLine size={14} />
+                        </button>
+                        <button 
+                          className="p-1 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded"
+                          onClick={() => deleteInstruction(instruction.id)}
+                          title="Delete directive"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-5 w-5 p-0 text-gray-400 hover:text-blue-400 hover:bg-blue-900/20"
-                        onClick={() => startEditing(instruction.id)}
-                      >
-                        <PencilLine size={12} />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-5 w-5 p-0 text-gray-400 hover:text-red-400 hover:bg-red-900/20"
-                        onClick={() => deleteInstruction(instruction.id)}
-                      >
-                        <Trash2 size={12} />
-                      </Button>
+                    <div className="flex mt-1">
+                      <CornerDownRight size={16} className="text-gray-600 mr-1 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-gray-200 font-medium">{instruction.text}</p>
                     </div>
                   </div>
-                </>
+                  
+                  {/* Context section */}
+                  <div>
+                    <button 
+                      className="w-full p-1.5 flex items-center justify-between bg-gray-800/40 hover:bg-gray-800/60 text-gray-400 text-xs font-mono border-t border-gray-700/30"
+                      onClick={() => toggleContext(instruction.id)}
+                    >
+                      <div className="flex items-center">
+                        <span className="text-[10px] opacity-70">CONTEXT</span>
+                      </div>
+                      {expandedContexts[instruction.id] ? 
+                        <ChevronUp size={12} /> : 
+                        <ChevronDown size={12} />
+                      }
+                    </button>
+                    
+                    {expandedContexts[instruction.id] && (
+                      <div className="p-2 bg-gray-900/60 border-t border-gray-800/50">
+                        {editingContext === instruction.id ? (
+                          <div>
+                            <textarea
+                              value={editContextText}
+                              onChange={(e) => setEditContextText(e.target.value)}
+                              className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-gray-300 text-xs font-mono mb-2 resize-none"
+                              rows={8}
+                              autoFocus
+                            />
+                            <div className="flex justify-end space-x-2 mt-2">
+                              <button 
+                                className="px-2 py-0.5 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded border border-gray-700"
+                                onClick={cancelContextEdit}
+                              >
+                                CANCEL
+                              </button>
+                              <button 
+                                className="px-2 py-0.5 text-xs bg-blue-900/70 hover:bg-blue-800 text-blue-300 rounded border border-blue-900/50"
+                                onClick={saveContextEdit}
+                              >
+                                UPDATE
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <pre className="whitespace-pre-wrap text-[10px] font-mono text-gray-400 max-h-60 overflow-y-auto p-2 bg-black/30 rounded border border-gray-800/50">
+                              {instruction.context}
+                            </pre>
+                            <div className="mt-2 flex justify-end">
+                              <button 
+                                className="px-2 py-0.5 text-[10px] bg-gray-800/70 hover:bg-gray-700 text-blue-300/80 rounded border border-gray-700/50 flex items-center gap-1"
+                                onClick={() => startEditingContext(instruction)}
+                              >
+                                <PencilLine size={10} />
+                                <span>EDIT</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           ))
         )}
-        
-        {/* New instruction input */}
-        {isAdding && (
-          <div className="bg-gray-800/30 rounded-md border border-gray-700/50 p-3">
-            <Input
-              value={newInstruction}
-              onChange={(e) => setNewInstruction(e.target.value)}
-              placeholder="Type new instruction and press Enter..."
-              className="bg-gray-900/50 border-gray-700 text-gray-200 text-xs mb-2"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddInstruction();
-                } else if (e.key === 'Escape') {
-                  setIsAdding(false);
-                  setNewInstruction("");
-                }
-              }}
-            />
-            <div className="flex justify-end gap-1">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 text-xs bg-green-900/20 text-green-400 hover:bg-green-900/30"
-                onClick={handleAddInstruction}
-              >
-                <Check size={12} className="mr-1" />
-                <span>Add</span>
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 text-xs bg-gray-800 text-gray-400 hover:bg-gray-700"
-                onClick={() => {
-                  setIsAdding(false);
-                  setNewInstruction("");
-                }}
-              >
-                <X size={12} className="mr-1" />
-                <span>Cancel</span>
-              </Button>
+        <div ref={chatEndRef} />
+      </div>
+      
+      {/* Message input */}
+      <div className="p-4 border-t border-red-800/50 bg-gray-900">
+        <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
+          <div className="flex-1 relative">
+            <div className="absolute left-0 top-0 bottom-0 flex items-center pl-3 pointer-events-none">
+              <Terminal size={16} className="text-red-500" />
             </div>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Issue new directive..."
+              className="w-full bg-gray-800 border border-gray-700 rounded-md text-gray-200 py-2.5 pl-10 pr-4 focus:outline-none focus:ring-1 focus:ring-red-700 focus:border-red-700 font-mono"
+              disabled={isPaused}
+            />
           </div>
-        )}
+          <button
+            type="submit"
+            className="bg-red-900 hover:bg-red-800 text-white p-2 rounded-md border border-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!newMessage.trim() || isPaused}
+          >
+            <Send size={16} />
+          </button>
+        </form>
       </div>
     </div>
   );

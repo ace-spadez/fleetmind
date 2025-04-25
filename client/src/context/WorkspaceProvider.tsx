@@ -19,10 +19,13 @@ interface WorkspaceContextType {
   setActiveDocumentId: (id: string | null) => void;
   updateDocumentContent: (id: string, content: string) => void;
   createDocument: (name: string, parentId?: string) => void;
+  deleteDocument: (id: string) => void;
   codeFiles: TreeNode[];
-  setCodeFiles: (files: TreeNode[]) => void;
+  setCodeFiles: (files: TreeNode[] | ((prev: TreeNode[]) => TreeNode[])) => void;
   activeCodeFileId: string | null;
   setActiveCodeFileId: (id: string | null) => void;
+  openCodeFiles: string[];
+  setOpenCodeFiles: (files: string[] | ((prev: string[]) => string[])) => void;
   orgBots: OrgBot[];
   setOrgBots: (bots: OrgBot[]) => void;
   orgConnections: BotConnection[];
@@ -43,6 +46,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>("overview");
   const [codeFiles, setCodeFiles] = useState<TreeNode[]>(mockCode);
   const [activeCodeFileId, setActiveCodeFileId] = useState<string | null>("solarsystem");
+  const [openCodeFiles, setOpenCodeFiles] = useState<string[]>(["solarsystem"]);
   
   // Organization state
   const [orgBots, setOrgBots] = useState<OrgBot[]>(mockOrgBots);
@@ -133,6 +137,28 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     setDocuments(prev => insertDocument(prev));
   };
 
+  const deleteDocument = (id: string) => {
+    const deleteFromDocs = (docs: File[]): File[] => {
+      return docs.filter(doc => {
+        if (doc.id === id) {
+          // If we're deleting the active document, clear the selection
+          if (activeDocumentId === id) {
+            setActiveDocumentId(null);
+          }
+          return false;
+        }
+        
+        if (doc.children) {
+          doc.children = deleteFromDocs(doc.children);
+        }
+        
+        return true;
+      });
+    };
+    
+    setDocuments(prev => deleteFromDocs(prev));
+  };
+
   return (
     <WorkspaceContext.Provider 
       value={{
@@ -148,10 +174,13 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         setActiveDocumentId,
         updateDocumentContent,
         createDocument,
+        deleteDocument,
         codeFiles,
         setCodeFiles,
         activeCodeFileId,
         setActiveCodeFileId,
+        openCodeFiles,
+        setOpenCodeFiles,
         orgBots,
         setOrgBots,
         orgConnections,

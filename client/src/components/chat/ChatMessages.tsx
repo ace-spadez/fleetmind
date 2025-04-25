@@ -269,11 +269,11 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
         
         // Update step statuses based on progress
         const updatedSteps = [...generationSteps].map((step, index) => {
-          if (index === 0) return { ...step, status: 'completed' };
-          if (index === 1 && progress >= 20) return { ...step, status: 'completed' };
-          if (index === 2 && progress >= 40) return { ...step, status: 'completed' };
-          if (index === 3 && progress >= 60) return { ...step, status: 'completed' };
-          if (index === 4 && progress >= 80) return { ...step, status: 'completed' };
+          if (index === 0) return { ...step, status: 'completed' as const };
+          if (index === 1 && progress >= 20) return { ...step, status: 'completed' as const };
+          if (index === 2 && progress >= 40) return { ...step, status: 'completed' as const };
+          if (index === 3 && progress >= 60) return { ...step, status: 'completed' as const };
+          if (index === 4 && progress >= 80) return { ...step, status: 'completed' as const };
           return step;
         });
         
@@ -316,11 +316,11 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
         
         // Update step statuses based on progress
         const updatedSteps = [...steps].map((step, index) => {
-          if (index === 0) return { ...step, status: 'completed' };
-          if (index === 1 && progress >= 20) return { ...step, status: 'completed' };
-          if (index === 2 && progress >= 40) return { ...step, status: 'completed' };
-          if (index === 3 && progress >= 60) return { ...step, status: 'completed' };
-          if (index === 4 && progress >= 80) return { ...step, status: 'completed' };
+          if (index === 0) return { ...step, status: 'completed' as const };
+          if (index === 1 && progress >= 20) return { ...step, status: 'completed' as const };
+          if (index === 2 && progress >= 40) return { ...step, status: 'completed' as const };
+          if (index === 3 && progress >= 60) return { ...step, status: 'completed' as const };
+          if (index === 4 && progress >= 80) return { ...step, status: 'completed' as const };
           return step;
         });
         
