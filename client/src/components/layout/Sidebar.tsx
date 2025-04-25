@@ -14,6 +14,7 @@ import {
   Sun,
   Moon,
   BotMessageSquare,
+  Network,
   Terminal
 } from "lucide-react";
 import { EnhancedTooltip } from "@/components/ui/enhanced-tooltip";
@@ -33,42 +34,42 @@ const Sidebar = () => {
     { 
       id: "chat", 
       name: "Chat",
-      icon: <BotMessageSquare size={18} />, 
+      icon: <BotMessageSquare size={17} />, 
       module: "chat" as Module,
       description: "Chat with AI assistants and view conversations between bots" 
     },
     { 
       id: "docs", 
       name: "Documentation",
-      icon: <NotebookText size={18} />, 
+      icon: <NotebookText size={17} />, 
       module: "docs" as Module,
       description: "Create and manage project documentation and notes" 
     },
     { 
       id: "code", 
       name: "Code Editor",
-      icon: <Code size={18} />, 
+      icon: <Code size={17} />, 
       module: "code" as Module,
       description: "View and edit code files with syntax highlighting" 
     },
     { 
       id: "chart", 
       name: "Charts",
-      icon: <PieChart size={18} />, 
+      icon: <PieChart size={17} />, 
       module: "chart" as Module,
       description: "Visualize metrics and data with interactive charts" 
     },
     { 
       id: "organization", 
       name: "Organization",
-      icon: <Users size={18} />, 
+      icon: <Network size={17} />, 
       module: "organization" as Module,
       description: "View the organization structure and bot hierarchy" 
     },
     { 
       id: "budget", 
       name: "Budget",
-      icon: <DollarSign size={18} />, 
+      icon: <DollarSign size={17} />, 
       module: "budget" as Module,
       description: "Track and manage project budget and expenses" 
     },
@@ -76,7 +77,7 @@ const Sidebar = () => {
 
   return (
     <TooltipProvider>
-      <div className="w-12 bg-[hsl(var(--sidebar-background))] flex flex-col items-center py-4 border-r border-[hsl(var(--sidebar-border))]">
+      <div className="w-10 bg-[hsl(var(--sidebar-background))] flex flex-col items-center py-4 border-r border-[hsl(var(--sidebar-border))]">
         {/* Home button at top */}
         <EnhancedTooltip 
           trigger={
@@ -102,8 +103,9 @@ const Sidebar = () => {
               key={item.id}
               trigger={
                 <IconButton
-                  className="relative"
                   variant={"default"}
+                  // on hover, change bg
+                  className={`relative hover:bg-gray-700/50`}
                   onClick={() => handleModuleClick(item.module)}
                   aria-label={item.id}
                 >
