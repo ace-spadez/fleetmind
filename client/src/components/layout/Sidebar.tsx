@@ -2,7 +2,6 @@ import { useWorkspace } from "@/context/WorkspaceProvider";
 import { useTheme } from "@/context/ThemeProvider";
 import { IconButton } from "../ui/icon-button";
 import { Module } from "@/types";
-import { Link, useLocation } from "wouter";
 import { 
   Home, 
   Bot, 
@@ -13,80 +12,149 @@ import {
   Settings,
   Users,
   Sun,
-  Moon
+  Moon,
+  BotMessageSquare,
+  Terminal
 } from "lucide-react";
+import { EnhancedTooltip } from "@/components/ui/enhanced-tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const Sidebar = () => {
   const { activeModule, setActiveModule } = useWorkspace();
   const { theme, toggleTheme } = useTheme();
-  const [location, navigate] = useLocation();
 
-  const handleModuleClick = (module: Module, path: string) => {
+  const handleModuleClick = (module: Module) => {
     setActiveModule(module);
-    navigate(path);
+    // Update the URL to reflect the active module
+    window.history.pushState({}, "", `/${module === "home" ? "" : module}`);
   };
 
   const navItems = [
-    { id: "chat", icon: <Bot size={18} />, module: "chat" as Module, path: "/chat" },
-    { id: "docs", icon: <NotebookText size={18} />, module: "docs" as Module, path: "/docs" },
-    { id: "code", icon: <Code size={18} />, module: "code" as Module, path: "/code" },
-    { id: "chart", icon: <PieChart size={18} />, module: "chart" as Module, path: "/chart" },
-    { id: "organization", icon: <Users size={18} />, module: "organization" as Module, path: "/organization" },
-    { id: "budget", icon: <DollarSign size={18} />, module: "budget" as Module, path: "/budget" },
+    { 
+      id: "chat", 
+      name: "Chat",
+      icon: <BotMessageSquare size={18} />, 
+      module: "chat" as Module,
+      description: "Chat with AI assistants and view conversations between bots" 
+    },
+    { 
+      id: "docs", 
+      name: "Documentation",
+      icon: <NotebookText size={18} />, 
+      module: "docs" as Module,
+      description: "Create and manage project documentation and notes" 
+    },
+    { 
+      id: "code", 
+      name: "Code Editor",
+      icon: <Code size={18} />, 
+      module: "code" as Module,
+      description: "View and edit code files with syntax highlighting" 
+    },
+    { 
+      id: "chart", 
+      name: "Charts",
+      icon: <PieChart size={18} />, 
+      module: "chart" as Module,
+      description: "Visualize metrics and data with interactive charts" 
+    },
+    { 
+      id: "organization", 
+      name: "Organization",
+      icon: <Users size={18} />, 
+      module: "organization" as Module,
+      description: "View the organization structure and bot hierarchy" 
+    },
+    { 
+      id: "budget", 
+      name: "Budget",
+      icon: <DollarSign size={18} />, 
+      module: "budget" as Module,
+      description: "Track and manage project budget and expenses" 
+    },
   ];
 
   return (
-    <div className="w-12 bg-[hsl(var(--sidebar-background))] flex flex-col items-center py-4 border-r border-[hsl(var(--sidebar-border))]">
-      {/* Home button at top */}
-      <IconButton
-        key="home"
-        variant={activeModule === "home" ? "active" : "default"}
-        onClick={() => handleModuleClick("home", "/")}
-        aria-label="home"
-        className="mb-6"
-      >
-        <Home size={18} />
-      </IconButton>
-      
-      {/* Center the main navigation items */}
-      <div className="flex flex-col items-center space-y-2 flex-1 justify-center">
-        {navItems.map((item) => (
-          <IconButton
-            key={item.id}
-            className="relative"
-            variant={activeModule === item.module ? "active" : "default"}
-            onClick={() => handleModuleClick(item.module, item.path)}
-            aria-label={item.id}
-          >
-            {item.icon}
-            {/* a circle if active */}
-            {activeModule === item.module && (
-              <div className="absolute right-0 w-1 h-1 bg-primary rounded-full"></div>
-            )}
-          </IconButton>
-        ))}
-      </div>
+    <TooltipProvider>
+      <div className="w-12 bg-[hsl(var(--sidebar-background))] flex flex-col items-center py-4 border-r border-[hsl(var(--sidebar-border))]">
+        {/* Home button at top */}
+        <EnhancedTooltip 
+          trigger={
+            <IconButton
+              key="home"
+              variant={activeModule === "home" ? "active" : "default"}
+              onClick={() => handleModuleClick("home")}
+              aria-label="home"
+              className="mb-6"
+            >
+              <Home size={18} />
+            </IconButton>
+          }
+          title="Home"
+          icon={<Home size={18} />}
+          description="Return to the home dashboard view"
+        />
+        
+        {/* Center the main navigation items */}
+        <div className="flex flex-col items-center space-y-2 flex-1 justify-center">
+          {navItems.map((item) => (
+            <EnhancedTooltip
+              key={item.id}
+              trigger={
+                <IconButton
+                  className="relative"
+                  variant={activeModule === item.module ? "active" : "default"}
+                  onClick={() => handleModuleClick(item.module)}
+                  aria-label={item.id}
+                >
+                  {item.icon}
+                  {/* a circle if active */}
+                  {activeModule === item.module && (
+                    <div className="absolute right-0 w-1 h-1 bg-primary rounded-full"></div>
+                  )}
+                </IconButton>
+              }
+              title={item.name}
+              icon={item.icon}
+              description={item.description}
+            />
+          ))}
+        </div>
 
-      {/* Theme toggle button */}
-      <IconButton
-        variant="default"
-        onClick={toggleTheme}
-        className="mt-auto mb-3"
-        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-      >
-        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-      </IconButton>
-      
-      {/* Settings button at bottom */}
-      <IconButton
-        variant={activeModule === "settings" ? "active" : "default"}
-        onClick={() => handleModuleClick("settings", "/settings")}
-        aria-label="settings"
-      >
-        <Settings size={18} />
-      </IconButton>
-    </div>
+        {/* Theme toggle button */}
+        <EnhancedTooltip
+          trigger={
+            <IconButton
+              variant="default"
+              onClick={toggleTheme}
+              className="mt-auto mb-3"
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </IconButton>
+          }
+          title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          icon={theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          description={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+        />
+        
+        {/* Settings button at bottom */}
+        <EnhancedTooltip
+          trigger={
+            <IconButton
+              variant={activeModule === "settings" ? "active" : "default"}
+              onClick={() => handleModuleClick("settings")}
+              aria-label="settings"
+            >
+              <Settings size={18} />
+            </IconButton>
+          }
+          title="Settings"
+          icon={<Settings size={18} />}
+          description="Configure application preferences and user settings"
+        />
+      </div>
+    </TooltipProvider>
   );
 };
 
