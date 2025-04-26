@@ -2,14 +2,14 @@ import { ChatData } from "@/types";
 
 export const mockChats: ChatData[] = [
   {
-    channelId: "assistant-bot",
+    channelId: "clever-fox-3721",
     messages: [
       {
         id: "1",
-        content: "Hello! I'm ready to help you with your workspace. Would you like me to help you build a project, write code, or answer any questions?",
+        content: "Hello! I'm Clever Fox, your primary assistant. How can I help you orchestrate your project today?",
         sender: "bot",
         timestamp: new Date(new Date().getTime() - 600000),
-        botName: "AssistantBot"
+        botName: "clever-fox-3721"
       },
       {
         id: "2",
@@ -20,36 +20,67 @@ export const mockChats: ChatData[] = [
       },
       {
         id: "3",
-        content: "I'd be happy to help you build a solar system simulator app! Let's break down the key components:\n\nCore Features:\n- Interactive 3D visualization of planets\n- Realistic orbital mechanics\n- Educational information about each celestial body\n- Time controls to speed up/slow down simulation\n\nTechnologies we could use:\n- Three.js for 3D visualization\n- React for UI components\n- Physics calculations for orbital mechanics\n\nWould you like me to create a project setup with these technologies or would you prefer to focus on a specific aspect first?",
+        content: "Certainly! Building a solar system simulator sounds fascinating. Let's break down the key components:\n\n**Core Features:**\n- Interactive 3D visualization of planets\n- Realistic orbital mechanics\n- Displaying educational information about each celestial body\n- Time controls (speed up/slow down)\n\n**Potential Technologies:**\n- Frontend: React, Three.js (for 3D)\n- Data: Simple JSON files for planet info initially\n\nWould you like me to coordinate with the Code Helper bot (swift-eagle-9042) to set up the basic project structure?",
         sender: "bot",
         timestamp: new Date(new Date().getTime() - 420000),
-        botName: "AssistantBot"
+        botName: "clever-fox-3721"
       },
       {
         id: "4",
-        content: "Let's start with setting up the project. I want to focus on education, so let's make sure we have good information about each planet.",
+        content: "Yes, please coordinate with swift-eagle-9042 for the setup.",
         sender: "user",
         timestamp: new Date(new Date().getTime() - 180000),
         userName: "User"
       },
+    ]
+  },
+  {
+    channelId: "swift-eagle-9042",
+    messages: [
       {
-        id: "5",
-        content: "Great! I'll help you set up an educational solar system simulator project. I'll create the initial setup with a focus on educational content.\n\nI've created the initial project setup. You can find the code in the repository. Is there a specific planet or feature you'd like to focus on implementing first?",
+        id: "1",
+        content: "Greetings! I am Swift Eagle, your Code Helper AI. I can assist with code generation, debugging, and technical implementation. How may I assist?",
         sender: "bot",
-        timestamp: new Date(new Date().getTime() - 120000),
-        botName: "AssistantBot"
+        timestamp: new Date(new Date().getTime() - 60000),
+        botName: "swift-eagle-9042"
+      },
+      {
+        id: "2",
+        content: "Directive from clever-fox-3721: Set up a basic React + Three.js project structure for a solar system simulator.",
+        sender: "bot",
+        timestamp: new Date(new Date().getTime() - 55000),
+        botName: "(System Directive)"
+      },
+      {
+        id: "3",
+        content: "Project structure initialized. Repository available at `solar-system-simulator`. Includes basic React setup and Three.js dependency.",
+        sender: "bot",
+        timestamp: new Date(new Date().getTime() - 50000),
+        botName: "swift-eagle-9042"
       }
     ]
   },
   {
-    channelId: "code-helper",
+    channelId: "creative-owl-7238",
     messages: [
       {
         id: "1",
-        content: "Hello! I'm CodeHelper. I can assist you with coding questions, debugging, and implementation. What would you like help with today?",
+        content: "Hoot! Creative Owl here. I specialize in UI/UX design, component creation, and visual refinement. What design challenges can we tackle?",
         sender: "bot",
-        timestamp: new Date(new Date().getTime() - 60000),
-        botName: "CodeHelper"
+        timestamp: new Date(new Date().getTime() - 40000),
+        botName: "creative-owl-7238"
+      }
+    ]
+  },
+  {
+    channelId: "precise-deer-5190",
+    messages: [
+      {
+        id: "1",
+        content: "Precise Deer reporting. I handle data analysis, visualization, and database interactions. Provide me with data or analysis tasks.",
+        sender: "bot",
+        timestamp: new Date(new Date().getTime() - 30000),
+        botName: "precise-deer-5190"
       }
     ]
   }

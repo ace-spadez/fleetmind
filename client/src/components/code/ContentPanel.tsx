@@ -6,6 +6,7 @@ import ChatMessages from '../chat/ChatMessages';
 import ChatInput from '../chat/ChatInput';
 import { EditorPanelNode, SplitOrientation, LayoutNode, ContentType, TreeNode } from '@/types';
 import './style.css'; // Ensure styles are imported
+import DirectiveBusChat from '../chat/DirectiveBusChat';
 
 interface ContentPanelProps {
   panelNode: EditorPanelNode;
@@ -36,49 +37,30 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
     splitPanel,
     activePanelId,
     setActivePanelId,
-    setEditorLayout, // Needed for direct manipulation in complex cases
+    setEditorLayout, 
     closeFileInPanel,
     openFileInPanel,
     updateFileContent,
-    chats,
-    activeChannelId,
-    addMessage
+    // chats, // Keep if needed for other logic
+    // activeChannelId, // Keep if needed for other logic
+    addMessage,
+    getTabData // Get the global getTabData function
   } = useWorkspace();
   
   const [dropZone, setDropZone] = useState<'top' | 'bottom' | 'left' | 'right' | 'center' | null>(null);
   
-  // Get the active content based on panel content type
+  // Get the active tab ID from the panel node
   const activeTabId = panelNode.activeTabId;
-  const contentType = panelNode.contentType;
-
-  // Extract data based on content type
-  const activeContent = activeTabId ? 
-    contentType === 'code' ? getFileData(activeTabId) : 
-    contentType === 'chat' ? { id: activeTabId, name: activeTabId } : 
-    null : null;
-
-  const getTabData = (id: string) => {
-    if (contentType === 'code') {
-      const file = getFileData(id);
-      return file ? { 
-        id: file.id, 
-        title: file.name, 
-        type: 'code' as ContentType 
-      } : null;
-    } 
-    else if (contentType === 'chat') {
-      // For chat tabs, the ID is the channel ID
-      return { 
-        id: id, 
-        title: id, 
-        type: 'chat' as ContentType 
-      };
-    }
-    return null;
-  };
   
-  // Get chat messages for chat content type
-  const activeChat = contentType === 'chat' && activeTabId ? 
+  // Get the active tab's full data using the global function
+  const activeTabData = activeTabId ? getTabData(activeTabId) : null;
+  
+  // Extract the active tab's type
+  const activeContentType = activeTabData?.type;
+
+  // Get chat messages ONLY if the active tab is a chat type
+  const { chats } = useWorkspace(); // Need chats specifically for message lookup
+  const activeChat = activeContentType === 'chat' && activeTabId ? 
     chats.find(chat => chat.channelId === activeTabId) : null;
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -146,16 +128,22 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
     
     try {
       let id: string;
-      let contentType: ContentType = 'code'; // Default to code
       let sourcePanelId: string | null = null;
-      
-      try {
-        const parsed = JSON.parse(dragData);
-        id = parsed.id || parsed.fileId; // Support both new and old format
-        contentType = parsed.contentType || 'code';
+
+      // Prioritize specific split data if available
+      if (e.dataTransfer.types.includes('application/json+tab-split')) {
+        const parsed = JSON.parse(e.dataTransfer.getData('application/json+tab-split'));
+        id = parsed.id;
         sourcePanelId = parsed.sourcePanelId;
-      } catch (parseError) {
-        id = dragData;
+      } else if (e.dataTransfer.types.includes('application/json')) { // General file/item drop
+        const parsed = JSON.parse(e.dataTransfer.getData('application/json'));
+        id = parsed.id || parsed.fileId; // Support dropping files from tree or other tabs
+        sourcePanelId = parsed.sourcePanelId; // May be null if from tree
+      } else if (e.dataTransfer.types.includes('text/plain')) { // Fallback
+        id = e.dataTransfer.getData('text/plain');
+      } else {
+         console.log("No compatible drag data found");
+         return;
       }
       
       if (!id) {
@@ -163,15 +151,11 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
         return;
       }
       
-      // Handle moving content to this panel vs splitting the panel
       if (currentDropZone === 'center') {
-        // If it's the same panel, do nothing
-        if (sourcePanelId === panelNode.id) {
-          return;
-        }
+        if (sourcePanelId === panelNode.id) return; // Drop onto self
         
-        // Move content to this panel (open it here and close from source panel if needed)
-        openFileInPanel(id, panelNode.id);
+        // Open the item (file or channel) in this panel
+        openFileInPanel(id, panelNode.id); 
         setActivePanelId(panelNode.id);
         return;
       }
@@ -204,14 +188,19 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
   
   // Handler for CodeEditor changes
   const handleEditorContentChange = (newContent: string | undefined) => {
-    if (contentType === 'code' && activeContent && newContent !== undefined) {
-      updateFileContent(activeContent.id, newContent);
+    // Use activeContentType now
+    if (activeContentType === 'code' && activeTabId && newContent !== undefined) {
+      // We need file data here specifically for the content update
+      const activeFileData = getFileData(activeTabId);
+      if (activeFileData) {
+         updateFileContent(activeTabId, newContent);
+      }
     }
   };
 
-  // Render content based on content type
+  // Render content based on the active tab's type
   const renderContent = () => {
-    if (!activeTabId) {
+    if (!activeTabId || !activeContentType) { // Check type as well
       return (
         <div className="flex items-center justify-center h-full text-[hsl(var(--dark-3))]">
           No content selected in this panel
@@ -219,12 +208,11 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
       );
     }
 
-    switch (contentType) {
+    switch (activeContentType) { // Switch on activeContentType
       case 'code':
-        if (!activeContent) return null;
-        
-        // Type guard to ensure the file content can be accessed
-        const codeFile = activeContent as TreeNode;
+        // Need to get the file data again here for rendering
+        const codeFile = getFileData(activeTabId);
+        if (!codeFile) return <div className="p-4">Error: Code file not found.</div>;
         
         return (
           <CodeEditor
@@ -237,16 +225,56 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
         );
         
       case 'chat':
+        const isDirectiveBus = activeTabId && activeTabId.includes('to-');
+        const getDirectiveBusInfo = () => {
+          if (activeTabId === "code-to-design") {
+            return { source: "swift-eagle-9042", target: "creative-owl-7238" };
+          } else if (activeTabId === "design-to-deploy") {
+            return { source: "creative-owl-7238", target: "clever-fox-3721" };
+          } else if (activeTabId === "dev-to-analytics") {
+            return { source: "swift-eagle-9042", target: "precise-deer-5190" };
+          }
+          return { source: "", target: "" };
+        };
+        
+        const { source, target } = getDirectiveBusInfo();
+        
         return (
           <div className="flex flex-col h-full">
-            <ChatMessages messages={activeChat?.messages || []} />
-            <ChatInput channelId={activeTabId} />
+            {/* Chat header with channel info */}
+            <div className="h-12 border-b border-gray-700/50 flex items-center px-4 bg-[hsl(var(--discord-8))] flex-shrink-0">
+              <div className="flex items-center">
+                <div className={`w-2 h-2 ${isDirectiveBus ? 'bg-red-500' : 'bg-green-500'} rounded-full mr-2`}></div>
+                <span className="text-white font-medium">{activeTabId}</span>
+                {isDirectiveBus && (
+                  <span className="ml-2 text-xs bg-red-900/30 text-red-300 px-2 py-0.5 rounded">
+                    directive bus
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            {/* Chat content area */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+              {isDirectiveBus ? (
+                <DirectiveBusChat 
+                  channelId={activeTabId || ''} 
+                  sourceBotId={source}
+                  targetBotId={target}
+                />
+              ) : (
+                <>
+                  <ChatMessages messages={activeChat?.messages || []} />
+                  <ChatInput channelId={activeTabId || ''} />
+                </>
+              )}
+            </div>
           </div>
         );
       default:
         return (
           <div className="flex items-center justify-center h-full text-[hsl(var(--dark-3))]">
-            Content type {contentType} not supported yet
+            Content type {activeContentType} not supported yet
           </div>
         );
     }
@@ -265,20 +293,22 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
         panelId={panelNode.id}
         openTabs={panelNode.openTabIds}
         activeTabId={panelNode.activeTabId}
-        contentType={panelNode.contentType}
+        // contentType={panelNode.contentType} // REMOVED
         setActiveTabId={(tabId) => {
+          // Update panel's activeTabId directly
           setEditorLayout(layout => updateNodeInLayout(layout, { ...panelNode, activeTabId: tabId }));
           setActivePanelId(panelNode.id);
         }}
-        getTabData={getTabData}
+        getTabData={getTabData} // Pass the global function from context
         onCloseTab={(tabId, panelId, e) => closeFileInPanel(tabId, panelId)}
       />
       
-      {/* Content Path/Title Header (if used) */}
-      {activeContent && contentType === 'code' && (
+      {/* Content Path/Title Header (only for code) */}
+      {activeContentType === 'code' && activeTabData && (
          <div className="h-8 border-b border-gray-700/50 flex items-center px-3 bg-[hsl(var(--dark-9))] flex-shrink-0">
             <span className="text-white font-medium text-xs truncate">
-              {(activeContent as any).path || activeContent.name}
+              {/* Need getFileData again here for path, or enhance getTabData */} 
+              { getFileData(activeTabData.id)?.path || activeTabData.title }
             </span>
         </div>
       )}

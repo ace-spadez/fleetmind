@@ -5,8 +5,9 @@ import Home from "./pages/Home";
 import NotFound from "@/pages/not-found";
 import { WorkspaceProvider } from "./context/WorkspaceProvider";
 import { ThemeProvider } from "./context/ThemeProvider";
+import React from 'react';
 
-function App() {
+const App: React.FC = () => {
   const [location] = useLocation();
   
   // Extract module from the current location
@@ -25,9 +26,9 @@ function App() {
   const activeModule = getModuleFromPath(location);
 
   return (
-    <TooltipProvider>
-      <ThemeProvider>
-        <WorkspaceProvider>
+    <ThemeProvider>
+      <WorkspaceProvider>
+        <TooltipProvider>
           <Toaster />
           <Switch>
             {/* Home route will render with the module extracted from the URL */}
@@ -41,10 +42,10 @@ function App() {
             <Route path="/settings" component={() => <Home initialModule="settings" />} />
             <Route component={NotFound} />
           </Switch>
-        </WorkspaceProvider>
-      </ThemeProvider>
-    </TooltipProvider>
+        </TooltipProvider>
+      </WorkspaceProvider>
+    </ThemeProvider>
   );
-}
+};
 
 export default App;

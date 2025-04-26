@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutNode } from '@/types';
-import EditorPanel from './EditorPanel';
+import ContentPanel from './ContentPanel';
 import Splitter from './Splitter';
 
 interface EditorLayoutProps {
@@ -9,8 +9,8 @@ interface EditorLayoutProps {
 
 const EditorLayout: React.FC<EditorLayoutProps> = ({ layoutNode }) => {
   if (layoutNode.type === 'panel') {
-    // Render a single editor panel
-    return <EditorPanel panelNode={layoutNode} />;
+    // Render a single content panel
+    return <ContentPanel panelNode={layoutNode} />;
   } else if (layoutNode.type === 'splitter') {
     // Render a split view
     const { orientation, children, splitPercentage, id } = layoutNode;

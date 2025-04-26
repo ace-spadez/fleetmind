@@ -91,11 +91,23 @@ interface BaseLayoutNode {
   id: string;
 }
 
+// Content type for what can be displayed in editor panels
+export type ContentType = 'code' | 'chat' | 'docs' | 'organization';
+
+// Content item interface for the new generalized tabs
+export interface TabContentItem {
+  id: string;
+  type: ContentType;
+  title: string;
+  iconType?: string;
+}
+
 // Represents a panel holding editor tabs
 export interface EditorPanelNode extends BaseLayoutNode {
   type: 'panel';
-  openFileIds: string[];
-  activeFileId: string | null;
+  openTabIds: string[];
+  activeTabId: string | null;
+  contentType: ContentType;
 }
 
 // Represents a split between two other nodes
@@ -110,3 +122,14 @@ export interface SplitterNode extends BaseLayoutNode {
 export type LayoutNode = EditorPanelNode | SplitterNode;
 
 // --- End of Editor Layout Types ---
+
+interface WorkspaceContextType {
+  // ... other properties
+  updateSplitRatio: (splitterId: string, percentage: number) => void;
+  getFileData: (fileId: string) => TreeNode | null;
+  updateFileContent: (fileId: string, content: string) => void;
+  getTabData: (tabId: string) => { id: string; title: string; type: ContentType } | null;
+
+  // Organization state
+  // ... existing code ...
+}

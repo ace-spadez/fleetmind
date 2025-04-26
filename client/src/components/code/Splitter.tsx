@@ -18,7 +18,7 @@ const Splitter: React.FC<SplitterProps> = ({ splitterId, orientation, initialPer
   // Find parent container on mount
   useEffect(() => {
     if (splitterRef.current) {
-      parentRef.current = splitterRef.current.parentElement;
+      parentRef.current = splitterRef.current.parentElement as HTMLDivElement;
     }
   }, []);
 

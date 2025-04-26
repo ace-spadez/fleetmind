@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from "react";
 import {
   Module, ChatData, File, TreeNode, Message, OrgBot, BotConnection,
-  LayoutNode, EditorPanelNode, SplitterNode, SplitOrientation 
+  LayoutNode, EditorPanelNode, SplitterNode, SplitOrientation, ContentType
 } from "../types";
 import { mockChats } from "../data/mockChats";
 import { mockDocuments } from "../data/mockDocuments";
@@ -117,9 +117,9 @@ interface WorkspaceContextType {
   setActivePanelId: (id: string | null) => void;
   
   // Functions to manipulate editor layout
-  openFileInPanel: (fileId: string, panelId?: string) => void;
-  closeFileInPanel: (fileId: string, panelId: string) => void;
-  splitPanel: (panelId: string, fileIdToMove: string, orientation: SplitOrientation, position: 'before' | 'after') => void;
+  openFileInPanel: (contentId: string, panelId?: string) => void;
+  closeFileInPanel: (contentId: string, panelId: string) => void;
+  splitPanel: (panelId: string, contentIdToMove: string, orientation: SplitOrientation, position: 'before' | 'after') => void;
   updateSplitRatio: (splitterId: string, percentage: number) => void;
   getFileData: (fileId: string) => TreeNode | null;
   updateFileContent: (fileId: string, content: string) => void;
@@ -131,6 +131,9 @@ interface WorkspaceContextType {
   setOrgConnections: (connections: BotConnection[]) => void;
   activeBotId: string | null;
   setActiveBotId: (id: string | null) => void;
+
+  // New getTabData function
+  getTabData: (tabId: string) => { id: string; title: string; type: ContentType } | null;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -140,8 +143,9 @@ const initialPanelId = uuidv4();
 const initialLayout: LayoutNode = {
   id: initialPanelId,
   type: 'panel',
-  openFileIds: ["solarsystem"], // Start with one file open
-  activeFileId: "solarsystem",
+  openTabIds: ["solarsystem"], // Start with one file open
+  activeTabId: "solarsystem",
+  // contentType: 'code' // REMOVED
 };
 
 export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
@@ -166,9 +170,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   // --- Code File Content Update --- 
   const updateFileContent = useCallback((fileId: string, newContent: string) => {
     setCodeFiles(prevCodeFiles => findAndUpdateFileContent(prevCodeFiles, fileId, newContent));
-  }, []); // No dependencies needed if findAndUpdateFileContent is pure
+  }, []);
 
-  // --- Code Editor Layout Functions --- 
+  // --- Content Management Functions --- 
 
   const getFileData = useCallback((fileId: string): TreeNode | null => {
     const find = (nodes: TreeNode[]): TreeNode | null => {
@@ -184,42 +188,90 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
     return find(codeFiles);
   }, [codeFiles]);
 
-  const openFileInPanel = useCallback((fileId: string, panelId?: string) => {
+  // Central function to get data for any tab ID
+  const getTabData = useCallback((tabId: string): { id: string; title: string; type: ContentType } | null => {
+    console.log('[getTabData] Checking ID:', tabId, 'Available chats:', chats.map(c => c.channelId));
+    
+    // Check if it's a code file
+    const codeFile = getFileData(tabId);
+    if (codeFile) {
+      return { id: tabId, title: codeFile.name, type: 'code' };
+    }
+    
+    // Check if it's a document (add logic if needed)
+    // const document = getDocumentData(tabId);
+    // if (document) {
+    //   return { id: tabId, title: document.name, type: 'docs' };
+    // }
+
+    // If not a code file or document, assume it's a chat channel ID
+    // (This relies on the assumption that only valid IDs are passed to openFileInPanel)
+    // We could make this more robust by checking against a known list of channels if needed.
+    return { id: tabId, title: tabId, type: 'chat' };
+    
+    // Original check based on existing chats (removed as it was too restrictive):
+    // const chatExists = chats.some(chat => chat.channelId === tabId);
+    // if (chatExists) {
+    //   return { id: tabId, title: tabId, type: 'chat' }; 
+    // }
+    
+    // console.warn(`Tab data not found for ID: ${tabId}`);
+    // return null; // Should generally not happen with the assumption above
+  }, [getFileData, chats]);
+
+  const openFileInPanel = useCallback((contentId: string, panelId?: string) => {
     const targetPanelId = panelId || activePanelId;
-    if (!targetPanelId) return; // Should not happen if there's always a layout
+    if (!targetPanelId) return; 
 
     setEditorLayout(prevLayout => {
       const panel = findPanelById(prevLayout, targetPanelId);
       if (!panel) return prevLayout;
 
+      // Get tab data to ensure it's a valid openable item
+      const tabData = getTabData(contentId);
+      if (!tabData) {
+        console.error(`Cannot open item with ID ${contentId}: No data found.`);
+        return prevLayout; // Don't modify layout if item doesn't exist
+      }
+
       let updatedPanel: EditorPanelNode;
-      if (!panel.openFileIds.includes(fileId)) {
+      if (!panel.openTabIds.includes(contentId)) {
         updatedPanel = {
           ...panel,
-          openFileIds: [...panel.openFileIds, fileId],
-          activeFileId: fileId // Make the newly opened file active
+          openTabIds: [...panel.openTabIds, contentId],
+          activeTabId: contentId, // Make the newly opened content active
+          // No contentType needed here anymore
         };
       } else {
-        // File already open, just make it active
-        updatedPanel = { ...panel, activeFileId: fileId };
+        // Content already open, just make it active
+        updatedPanel = { ...panel, activeTabId: contentId }; // No contentType needed here
       }
 
       return updateNodeInLayout(prevLayout, updatedPanel);
     });
-    // Set the panel containing the opened file as the active panel
     setActivePanelId(targetPanelId);
-  }, [activePanelId]);
+  }, [activePanelId, getTabData]); // Depends on getTabData now
 
-  const closeFileInPanel = useCallback((fileId: string, panelId: string) => {
+  const closeFileInPanel = useCallback((contentId: string, panelId: string) => {
     setEditorLayout(prevLayout => {
       const panel = findPanelById(prevLayout, panelId);
       if (!panel) return prevLayout;
 
-      const newOpenFileIds = panel.openFileIds.filter(id => id !== fileId);
+      const newOpenTabIds = panel.openTabIds.filter(id => id !== contentId);
 
-      // If this was the last file, remove the panel
-      if (newOpenFileIds.length === 0) {
+      if (newOpenTabIds.length === 0) {
         const newLayout = removeNodeFromLayout(prevLayout, panelId);
+        if (!newLayout) {
+          const newInitialPanelId = uuidv4();
+          setActivePanelId(newInitialPanelId);
+          return {
+            id: newInitialPanelId,
+            type: 'panel',
+            openTabIds: [],
+            activeTabId: null,
+            // No contentType needed
+          };
+        }
         // If layout becomes null (last panel closed), reset to initial state
         if (!newLayout) {
           const newInitialPanelId = uuidv4();
@@ -227,8 +279,9 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
           return {
             id: newInitialPanelId,
             type: 'panel',
-            openFileIds: [],
-            activeFileId: null,
+            openTabIds: [],
+            activeTabId: null,
+            // No contentType needed
           };
         } else {
           // Find a remaining panel to activate (e.g., the first one found)
@@ -246,52 +299,59 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         return newLayout || initialLayout; // Should not be null here based on above logic
       }
 
-      // If the closed file was active, select the previous one or the new last one
-      let newActiveFileId = panel.activeFileId;
-      if (panel.activeFileId === fileId) {
-        const closedIndex = panel.openFileIds.indexOf(fileId);
-        newActiveFileId = newOpenFileIds[Math.max(0, closedIndex - 1)] || newOpenFileIds[newOpenFileIds.length - 1] || null;
+      // If the closed content was active, select the previous one or the new last one
+      let newActiveTabId = panel.activeTabId;
+      if (panel.activeTabId === contentId) {
+        const closedIndex = panel.openTabIds.indexOf(contentId);
+        newActiveTabId = newOpenTabIds[Math.max(0, closedIndex - 1)] || newOpenTabIds[newOpenTabIds.length - 1] || null;
       }
 
       const updatedPanel: EditorPanelNode = {
         ...panel,
-        openFileIds: newOpenFileIds,
-        activeFileId: newActiveFileId,
+        openTabIds: newOpenTabIds,
+        activeTabId: newActiveTabId,
+        // No contentType
       };
 
       return updateNodeInLayout(prevLayout, updatedPanel);
     });
   }, []);
 
-  const splitPanel = useCallback((panelId: string, fileIdToMove: string, orientation: SplitOrientation, position: 'before' | 'after') => {
+  const splitPanel = useCallback((panelId: string, contentIdToMove: string, orientation: SplitOrientation, position: 'before' | 'after') => {
+    
+    // Ensure the item being moved actually exists
+    const tabDataToMove = getTabData(contentIdToMove);
+    if (!tabDataToMove) {
+        console.error(`Cannot split panel: No data found for item ID ${contentIdToMove}`);
+        // If getTabData isn't in scope here yet due to placement, 
+        // you might need to adjust dependencies or pass it.
+        // For now, we'll assume it is available or bail out.
+        return; // Abort split if the item doesn't exist
+    }
+    
     setEditorLayout(prevLayout => {
       const panelToSplit = findPanelById(prevLayout, panelId);
-      if (!panelToSplit || panelToSplit.openFileIds.length < 1) return prevLayout; // Cannot split if < 1 file
+      if (!panelToSplit || !panelToSplit.openTabIds.includes(contentIdToMove)) return prevLayout; 
 
-      // Create the new panel
+      // Create the new panel with the moved content
       const newPanel: EditorPanelNode = {
         id: uuidv4(),
         type: 'panel',
-        openFileIds: [fileIdToMove],
-        activeFileId: fileIdToMove,
+        openTabIds: [contentIdToMove],
+        activeTabId: contentIdToMove,
+        // No contentType
       };
 
       // Update the original panel
       const originalPanelUpdated: EditorPanelNode = {
         ...panelToSplit,
-        openFileIds: panelToSplit.openFileIds.filter(id => id !== fileIdToMove),
-        // Make remaining file active if the moved one was active
-        activeFileId: panelToSplit.activeFileId === fileIdToMove
-          ? panelToSplit.openFileIds.filter(id => id !== fileIdToMove)[0] || null 
-          : panelToSplit.activeFileId,
+        openTabIds: panelToSplit.openTabIds.filter(id => id !== contentIdToMove),
+        activeTabId: panelToSplit.activeTabId === contentIdToMove
+          ? panelToSplit.openTabIds.filter(id => id !== contentIdToMove)[0] || null 
+          : panelToSplit.activeTabId,
+        // No contentType
       };
       
-      // If original panel becomes empty after move, just replace it with new panel
-      if (originalPanelUpdated.openFileIds.length === 0) {
-         setActivePanelId(newPanel.id); // Activate the new panel
-         return updateNodeInLayout(prevLayout, { ...newPanel, id: panelToSplit.id }); // Reuse ID
-      }
-
       // Create the new splitter node
       const newSplitter: SplitterNode = {
         id: uuidv4(),
@@ -321,7 +381,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       setActivePanelId(newPanel.id); // Activate the new panel
       return newLayout;
     });
-  }, []);
+  }, [getTabData]); // Add getTabData dependency
 
   const updateSplitRatio = useCallback((splitterId: string, percentage: number) => {
     setEditorLayout(prevLayout => {
@@ -474,6 +534,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         updateSplitRatio,
         getFileData,
         updateFileContent,
+        getTabData,
         orgBots,
         setOrgBots,
         orgConnections,

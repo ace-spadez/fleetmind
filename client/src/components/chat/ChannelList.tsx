@@ -1,10 +1,85 @@
 import { useWorkspace } from "@/context/WorkspaceProvider";
 import { Channel } from "@/types";
-import { ChevronDown, Plus, Mic, Headphones, Settings } from "lucide-react";
+import { ChevronDown, Play, Pause, Plus, Settings } from "lucide-react";
 import UserProfile from "./UserProfile";
+import React, { useEffect } from "react";
+
+// Add animation CSS to document head
+const addAnimationStyles = () => {
+  // Check if style already exists
+  if (document.getElementById('channel-list-animations')) return;
+  
+  const style = document.createElement('style');
+  style.id = 'channel-list-animations';
+  style.innerHTML = `
+    @keyframes borderAnimation {
+      0% {
+        background-position: 0% 0%;
+      }
+      100% {
+        background-position: 300% 0%;
+      }
+    }
+    
+    .active-agent-border {
+      position: relative;
+    }
+    
+    .active-agent-border::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 0.375rem; /* matches rounded-md */
+      pointer-events: none;
+      border: 1px solid rgba(156, 163, 175, 0.15); /* extremely faint gray border */
+      z-index: 0;
+    }
+    
+    .active-agent-border::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 0.375rem; /* matches rounded-md */
+      pointer-events: none;
+      z-index: 1;
+      background: linear-gradient(
+        90deg, 
+        transparent, 
+        transparent,
+        rgba(99, 102, 241, 0.8),
+        transparent,
+        transparent
+      );
+      background-size: 300% 100%;
+      animation: borderAnimation 3s linear infinite;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      border: 1px solid transparent;
+    }
+  `;
+  document.head.appendChild(style);
+};
 
 const ChannelList = () => {
-  const { activeChannelId, setActiveChannelId } = useWorkspace();
+  const { activeChannelId, setActiveChannelId, openFileInPanel } = useWorkspace();
+
+  // Add animation styles when component mounts
+  useEffect(() => {
+    addAnimationStyles();
+    // Clean up style when component unmounts
+    return () => {
+      const style = document.getElementById('channel-list-animations');
+      if (style) style.remove();
+    };
+  }, []);
 
   const primaryChannels: Channel[] = [
     { 
@@ -46,96 +121,149 @@ const ChannelList = () => {
       id: "code-to-design", 
       name: "swift-eagle-9042 → creative-owl-7238", 
       type: "directive", 
-      active: activeChannelId === "code-to-design" 
+      active: activeChannelId === "code-to-design",
+      isActive: true
     },
     { 
       id: "design-to-deploy", 
       name: "creative-owl-7238 → clever-fox-3721", 
       type: "directive", 
-      active: activeChannelId === "design-to-deploy" 
+      active: activeChannelId === "design-to-deploy",
+      isActive: false
     },
     { 
       id: "dev-to-analytics", 
       name: "swift-eagle-9042 → precise-deer-5190", 
       type: "directive", 
-      active: activeChannelId === "dev-to-analytics" 
+      active: activeChannelId === "dev-to-analytics",
+      isActive: true
     },
   ];
 
   const handleChannelClick = (channelId: string) => {
+    // Set the selected channel as the active channel
     setActiveChannelId(channelId);
+    
+    // Open the channel in the editor layout with the proper content type
+    openFileInPanel(channelId);
+  };
+
+  // Simple status indicator for directive channels
+  const SimpleStatusIndicator = ({ isActive }: { isActive: boolean }) => {
+    return (
+      <div className="relative flex-shrink-0 w-2 h-2 mr-2">
+        <div className={`absolute inset-0 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-500'}`}></div>
+      </div>
+    );
   };
 
   return (
-    <div className="w-64 bg-[hsl(var(--discord-9))] flex flex-col border-r border-gray-700/50">
-      {/* Server/Workspace Name */}
-      <div className="p-4 border-b border-gray-700/50 flex items-center">
-        <h2 className="font-semibold text-white">Workspace</h2>
-        <ChevronDown className="ml-auto text-[hsl(var(--dark-2))]" size={18} />
+    <div className="h-full flex flex-col bg-[hsl(var(--dark-8))] w-full min-w-[180px] max-w-[320px] transition-all duration-300">
+      {/* Header */}
+      <div className="p-3 border-b border-gray-700/50">
+        <h2 className="text-white font-semibold text-base">Channels</h2>
       </div>
       
-      {/* Channels */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-3">
+        {/* Agentic Channels Section */}
         <div className="mb-4">
-          <div className="text-xs font-semibold text-[hsl(var(--dark-2))] px-2 py-1 uppercase flex items-center">
-            <span>Primary Bots</span>
+          <div className="flex items-center justify-between text-[10px] font-semibold text-[hsl(var(--dark-2))] py-1">
+            <div className="flex items-center gap-1">
+              <ChevronDown size={10} />
+              <span className="tracking-wider">Agentic Channels</span>
+            </div>
+            <button className="hover:text-white transition-colors hover:bg-[hsl(var(--dark-7))] rounded p-1">
+              <Plus size={12} />
+            </button>
           </div>
           
           <div className="space-y-1">
             {primaryChannels.map((channel) => (
-              <div 
+              <div
                 key={channel.id}
-                className={`px-2 py-1 rounded ${channel.active 
-                  ? 'bg-[hsl(var(--discord-7))] text-white' 
-                  : 'text-[hsl(var(--dark-2))] hover:text-white hover:bg-[hsl(var(--discord-8))]'} 
-                  flex items-center cursor-pointer`}
                 onClick={() => handleChannelClick(channel.id)}
+                className={`
+                  relative flex items-center px-2 py-1.5 rounded-md group
+                  hover:bg-[hsl(var(--dark-7))] 
+                  ${channel.active ? 'bg-[hsl(var(--dark-7))] text-white' : 'text-[hsl(var(--dark-2))]'}
+                  hover:text-white transition-colors cursor-pointer
+                  ${channel.isActive ? 'active-agent-border' : ''}
+                `}
               >
-                <div className="relative mr-2">
-                  {channel.isActive ? (
-                    <div className="relative">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <div className="absolute inset-0 w-2 h-2 bg-green-400/50 rounded-full animate-ping"></div>
+                <div className="flex-1 min-w-0 truncate text-xs font-medium">
+                  {channel.name}
+                  {channel.botType && (
+                    <div className="text-[10px] text-[hsl(var(--dark-3))] truncate">
+                      {channel.botType}
                     </div>
-                  ) : (
-                    <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
                   )}
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-sm">{channel.name}</span>
-                  <span className="text-xs text-gray-400">{channel.botType}</span>
+                
+                <div className={`${channel.active ? 'flex' : 'hidden group-hover:flex'} text-[hsl(var(--dark-2))] space-x-1`}>
+                  <button className="hover:text-white p-0.5 rounded hover:bg-[hsl(var(--dark-6))] transition-colors">
+                    {channel.isActive ? <Pause size={12} /> : <Play size={12} />}
+                  </button>
+                  <button className="hover:text-white p-0.5 rounded hover:bg-[hsl(var(--dark-6))] transition-colors">
+                    <Settings size={12} />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
         
+        {/* Directive Channels Section */}
         <div>
-          <div className="text-xs font-semibold text-[hsl(var(--dark-2))] px-2 py-1 uppercase flex items-center">
-            <span>Directive Buses</span>
+          <div className="flex items-center justify-between text-[10px] font-semibold text-[hsl(var(--dark-2))] py-1">
+            <div className="flex items-center gap-1">
+              <ChevronDown size={10} />
+              <span className="tracking-wider">Directive Channels</span>
+            </div>
+            <button className="hover:text-white transition-colors hover:bg-[hsl(var(--dark-7))] rounded p-1">
+              <Plus size={12} />
+            </button>
           </div>
           
           <div className="space-y-1">
-            {directiveChannels.map((channel) => (
-              <div 
-                key={channel.id}
-                className={`px-2 py-1 rounded ${channel.active 
-                  ? 'bg-[hsl(var(--discord-7))] text-white' 
-                  : 'text-[hsl(var(--dark-2))] hover:text-white hover:bg-[hsl(var(--discord-8))]'} 
-                  flex items-center cursor-pointer`}
-                onClick={() => handleChannelClick(channel.id)}
-              >
-                <div className="relative mr-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+            {directiveChannels.map((channel) => {
+              // Extract source and target for better display
+              const parts = channel.name.split(' → ');
+              const sourceName = parts[0];
+              const targetName = parts[1];
+              
+              return (
+                <div
+                  key={channel.id}
+                  onClick={() => handleChannelClick(channel.id)}
+                  className={`flex items-center px-2 py-1.5 rounded-md group
+                    hover:bg-[hsl(var(--dark-7))] 
+                    ${channel.active ? 'bg-[hsl(var(--dark-7))] text-white' : 'text-[hsl(var(--dark-2))]'}
+                    hover:text-white transition-colors cursor-pointer`}
+                >
+                  <SimpleStatusIndicator isActive={channel.isActive ?? false} />
+                  
+                  <div className="flex-1 min-w-0 text-xs font-medium">
+                    <div className="truncate">
+                      {channel.id}
+                    </div>
+                    <div className="text-[10px] text-[hsl(var(--dark-3))] truncate">
+                      {sourceName} → {targetName}
+                    </div>
+                  </div>
+                  
+                  <div className={`${channel.active ? 'flex' : 'hidden group-hover:flex'} text-[hsl(var(--dark-2))] space-x-1`}>
+                    <button className="hover:text-white p-0.5 rounded hover:bg-[hsl(var(--dark-6))] transition-colors">
+                      {channel.isActive ? <Pause size={12} /> : <Play size={12} />}
+                    </button>
+                  </div>
                 </div>
-                <span className="text-xs">{channel.name}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
       
-      {/* User Profile */}
+      {/* User Profile fixed at bottom */}
       <UserProfile />
     </div>
   );

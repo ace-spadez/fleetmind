@@ -1,26 +1,51 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useWorkspace } from "@/context/WorkspaceProvider";
-import CodeTree from "./CodeTree";
+import ModulePanel from "./ModulePanel";
 import EditorLayout from "./EditorLayout";
+import SidebarSplitter from "../ui/SidebarSplitter";
 
 const CodeModule = () => {
   const { 
-    codeFiles, 
+    codeFiles,
     editorLayout,
     openFileInPanel,
+    activeModule,
+    setActiveChannelId,
+    activePanelId,
+    chats
   } = useWorkspace();
   
   const [treeWidth, setTreeWidth] = useState(250);
   const [isResizingTree, setIsResizingTree] = useState(false);
   const resizeContainerRef = useRef<HTMLDivElement>(null);
   
-  // Handle opening a file from the tree (opens in active panel)
-  const handleFileOpen = (fileId: string) => {
-    openFileInPanel(fileId);
+  // Helper to find a panel by ID in the layout (might be needed elsewhere or removed)
+  const findPanelById = (node: any, panelId: string): any => {
+    if (node.type === 'panel' && node.id === panelId) {
+      return node;
+    }
+    if (node.type === 'splitter') {
+      const foundInChild1 = findPanelById(node.children[0], panelId);
+      if (foundInChild1) return foundInChild1;
+      const foundInChild2 = findPanelById(node.children[1], panelId);
+      if (foundInChild2) return foundInChild2;
+    }
+    return null;
+  };
+  
+  // Handle opening content from the sidebar
+  const handleContentOpen = (id: string) => {
+    // Based on the active module, we can potentially hint the content type
+    // but openFileInPanel ultimately decides based on the id and context.
+    if (activeModule === 'chat') {
+      setActiveChannelId(id); 
+    }
+    // Regardless of module, open the item. WorkspaceProvider determines type.
+    openFileInPanel(id);
   };
 
   // --- Tree Resizing Logic --- 
-  const handleTreeResizeMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleTreeResizeStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsResizingTree(true);
@@ -56,45 +81,26 @@ const CodeModule = () => {
       document.removeEventListener('mouseup', handleTreeResizeMouseUp);
     };
   }, [isResizingTree, handleTreeResizeMouseMove, handleTreeResizeMouseUp]);
-  // --- End Tree Resizing Logic --- 
-
+  
   return (
-    <div className="flex flex-col h-full w-full bg-[hsl(var(--dark-8))]">
-      <div 
-        ref={resizeContainerRef}
-        className="flex h-full overflow-hidden relative"
-      >
-        {/* Code Tree (Resizable) */}
-        <div 
-          className="overflow-auto h-full flex-shrink-0"
-          style={{ 
-            width: `${treeWidth}px`, 
-          }}
-        >
-          <CodeTree codeFiles={codeFiles} onFileOpen={handleFileOpen} />
-        </div>
-        
-        {/* Tree Resize Handle - Styled like Splitter */}
-        <div
-          className={`splitter cursor-col-resize w-1 h-full select-none z-10 flex justify-center items-center 
-                     bg-black`}
-          style={{ 
-            flexShrink: 0, 
-          }}
-          onMouseDown={handleTreeResizeMouseDown}
-        >
-          <div className="splitter-grip h-10 w-[3px] bg-gray-600/50 rounded-full pointer-events-none"></div>
-        </div>
-        
-        {/* Main Editor Area */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden"> {/* Removed ml-1 which might interfere */}
-          <EditorLayout layoutNode={editorLayout} />
-        </div>
-        
-        {/* Tree resizing overlay */}
-        {isResizingTree && (
-          <div className="fixed inset-0 z-50 cursor-col-resize" />
-        )}
+    <div className="flex-1 flex overflow-hidden" ref={resizeContainerRef}>
+      {/* Module-specific sidebar - changes based on activeModule */}
+      <div style={{ width: treeWidth, flexShrink: 0 }} className="h-full overflow-hidden">
+        <ModulePanel 
+          width={treeWidth} 
+          onFileOpen={handleContentOpen} 
+        />
+      </div>
+      
+      {/* Resizer handle using the SidebarSplitter component */}
+      <SidebarSplitter 
+        isResizing={isResizingTree} 
+        onResizeStart={handleTreeResizeStart} 
+      />
+      
+      {/* Editor area */}
+      <div className="flex-1 h-full overflow-hidden">
+        <EditorLayout layoutNode={editorLayout} />
       </div>
     </div>
   );

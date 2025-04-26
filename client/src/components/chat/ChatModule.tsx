@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef, useCallback } from "react";
 import ChannelList from "./ChannelList";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
@@ -5,12 +6,17 @@ import DirectiveBusChat from "./DirectiveBusChat";
 import UserProfile from "./UserProfile";
 import { useWorkspace } from "@/context/WorkspaceProvider";
 import { Hash, Users, Bell, Pin, Search, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Message } from "@/types";
+import SidebarSplitter from "../ui/SidebarSplitter";
 
 const ChatModule = () => {
   const { activeChannelId, chats, addMessage } = useWorkspace();
   const [initialized, setInitialized] = useState<{[key: string]: boolean}>({});
+  
+  // Sidebar resizing state
+  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Find active chat - create default messages for primary bot channels if needed
   const activeChat = chats.find(chat => chat.channelId === activeChannelId);
@@ -39,6 +45,44 @@ const ChatModule = () => {
     }
   }, [activeChannelId, activeChat, addMessage, isDirectiveBus, initialized]);
   
+  // Sidebar resize handlers
+  const handleSidebarResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizingSidebar(true);
+  }, []);
+  
+  const handleSidebarResizeMove = useCallback((e: MouseEvent) => {
+    if (!isResizingSidebar) return;
+    
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    if (!containerRect) return;
+    
+    const containerLeft = containerRect.left;
+    const newWidth = Math.max(200, Math.min(400, e.clientX - containerLeft));
+    
+    setSidebarWidth(newWidth);
+  }, [isResizingSidebar]);
+  
+  const handleSidebarResizeEnd = useCallback(() => {
+    setIsResizingSidebar(false);
+  }, []);
+  
+  useEffect(() => {
+    if (isResizingSidebar) {
+      document.addEventListener('mousemove', handleSidebarResizeMove);
+      document.addEventListener('mouseup', handleSidebarResizeEnd);
+    } else {
+      document.removeEventListener('mousemove', handleSidebarResizeMove);
+      document.removeEventListener('mouseup', handleSidebarResizeEnd);
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleSidebarResizeMove);
+      document.removeEventListener('mouseup', handleSidebarResizeEnd);
+    };
+  }, [isResizingSidebar, handleSidebarResizeMove, handleSidebarResizeEnd]);
+  
   // Extract source and target bot IDs for directive buses
   const getDirectiveBusInfo = () => {
     // Parse IDs from channel names like "code-to-design" or directive channel names
@@ -55,9 +99,17 @@ const ChatModule = () => {
   const { source, target } = getDirectiveBusInfo();
   
   return (
-    <div className="flex-1 flex overflow-hidden">
-      {/* Chat Channels List */}
+    <div className="flex-1 flex overflow-hidden" ref={containerRef}>
+      {/* Chat Channels List with dynamic width */}
+      <div style={{ width: sidebarWidth, flexShrink: 0 }} className="h-full overflow-hidden">
       <ChannelList />
+      </div>
+      
+      {/* Resizer between sidebar and content */}
+      <SidebarSplitter 
+        isResizing={isResizingSidebar}
+        onResizeStart={handleSidebarResizeStart}
+      />
       
       {/* Chat Content */}
       <div className="flex-1 flex flex-col bg-[hsl(var(--discord-6))]">

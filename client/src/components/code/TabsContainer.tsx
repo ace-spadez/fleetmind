@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
-import CodeTab from './CodeTab';
-import { TreeNode, LayoutNode } from '@/types';
+import ContentTab from './ContentTab';
+import { LayoutNode, ContentType } from '@/types';
 import { useWorkspace } from '@/context/WorkspaceProvider'; // Need workspace for setting editor layout
 import './style.css';
 
 interface TabsContainerProps {
   panelId: string;
-  openFiles: string[];
-  activeFileId: string | null;
-  setActiveFileId: (id: string | null) => void;
-  getFileById: (id: string) => TreeNode | null;
-  onCloseTab: (fileId: string, panelId: string, e: React.MouseEvent) => void;
+  openTabs: string[];
+  activeTabId: string | null;
+  contentType: ContentType;
+  setActiveTabId: (id: string | null) => void;
+  getTabData: (id: string) => { title: string; id: string; type: ContentType } | null;
+  onCloseTab: (tabId: string, panelId: string, e: React.MouseEvent) => void;
 }
 
 const TabsContainer: React.FC<TabsContainerProps> = ({
   panelId,
-  openFiles,
-  activeFileId,
-  setActiveFileId,
-  getFileById,
+  openTabs,
+  activeTabId,
+  contentType,
+  setActiveTabId,
+  getTabData,
   onCloseTab
 }) => {
   const { setEditorLayout } = useWorkspace();
@@ -52,28 +54,28 @@ const TabsContainer: React.FC<TabsContainerProps> = ({
       // Update the layout in the context
       setEditorLayout(layout => {
         if (layout.type === 'panel' && layout.id === panelId) {
-          const newOpenFiles = [...layout.openFileIds];
-          const [draggedFile] = newOpenFiles.splice(draggedIndex, 1);
-          newOpenFiles.splice(dropIndex, 0, draggedFile);
-          return { ...layout, openFileIds: newOpenFiles };
+          const newOpenTabs = [...layout.openTabIds];
+          const [draggedTab] = newOpenTabs.splice(draggedIndex, 1);
+          newOpenTabs.splice(dropIndex, 0, draggedTab);
+          return { ...layout, openTabIds: newOpenTabs };
         } else if (layout.type === 'splitter') {
           // Need recursive update for splitters
-          const updatePanelFilesInSplitter = (node: LayoutNode): LayoutNode => {
+          const updatePanelTabsInSplitter = (node: LayoutNode): LayoutNode => {
             if (node.type === 'panel' && node.id === panelId) {
-              const newOpenFiles = [...node.openFileIds];
-              const [draggedFile] = newOpenFiles.splice(draggedIndex, 1);
-              newOpenFiles.splice(dropIndex, 0, draggedFile);
-              return { ...node, openFileIds: newOpenFiles };
+              const newOpenTabs = [...node.openTabIds];
+              const [draggedTab] = newOpenTabs.splice(draggedIndex, 1);
+              newOpenTabs.splice(dropIndex, 0, draggedTab);
+              return { ...node, openTabIds: newOpenTabs };
             }
             if (node.type === 'splitter') {
               return { 
                 ...node, 
-                children: [updatePanelFilesInSplitter(node.children[0]), updatePanelFilesInSplitter(node.children[1])] 
+                children: [updatePanelTabsInSplitter(node.children[0]), updatePanelTabsInSplitter(node.children[1])] 
               };
             }
             return node;
           };
-          return updatePanelFilesInSplitter(layout);
+          return updatePanelTabsInSplitter(layout);
         } 
         return layout; // Should not happen
       });
@@ -87,25 +89,26 @@ const TabsContainer: React.FC<TabsContainerProps> = ({
   
   // Handler for initiating external drag (split)
   // This component doesn't handle the drop, only initiates
-  const handleDragStartExternal = (fileId: string, sourcePanelId: string, e: React.DragEvent) => {
-    // Set data for EditorPanel drop handler
-    const dragData = JSON.stringify({ fileId, sourcePanelId });
+  const handleDragStartExternal = (tabId: string, sourcePanelId: string, e: React.DragEvent) => {
+    const tabData = getTabData(tabId);
+    if (!tabData) return;
+
+    const dragData = JSON.stringify({ 
+      id: tabId, 
+      contentType: tabData.type,
+      sourcePanelId 
+    });
     
-    // Use a specific type for tab splits if needed, otherwise use general JSON
     e.dataTransfer.setData('application/json+tab-split', dragData);
-    // Provide fallback generic JSON data as well
-    e.dataTransfer.setData('application/json', dragData); 
-    
+    e.dataTransfer.setData('application/json', dragData);
+    e.dataTransfer.setData('text/plain', tabId); 
     e.dataTransfer.effectAllowed = 'move';
-    
-    // Optionally set a drag image (e.g., a ghost of the tab)
-    // e.dataTransfer.setDragImage(e.target, 0, 0); 
   };
 
   // Activate tab when clicked
-  const handleActivateTab = (fileId: string, targetPanelId: string) => {
+  const handleActivateTab = (tabId: string, targetPanelId: string) => {
     if (targetPanelId === panelId) {
-      setActiveFileId(fileId);
+      setActiveTabId(tabId);
     }
   };
 
@@ -125,22 +128,23 @@ const TabsContainer: React.FC<TabsContainerProps> = ({
 
   return (
     <div className="flex overflow-x-auto scrollbar-hidden border-b border-gray-700/50 bg-[hsl(var(--dark-8))] flex-shrink-0">
-      {openFiles.length > 0 ? (
+      {openTabs.length > 0 ? (
         <div className="flex">
-          {openFiles.map((fileId, index) => {
-            const file = getFileById(fileId);
-            if (!file) return null;
+          {openTabs.map((tabId, index) => {
+            const tab = getTabData(tabId);
+            if (!tab) return null;
             
-            const isActive = fileId === activeFileId;
+            const isActive = tabId === activeTabId;
             
             return (
               <div 
-                key={fileId} 
+                key={tabId} 
                 className={`tab-transition ${getTabClassName(index)}`}
               >
-                <CodeTab
-                  fileId={fileId}
-                  file={file}
+                <ContentTab
+                  id={tabId}
+                  title={tab.title}
+                  contentType={tab.type}
                   panelId={panelId}
                   isActive={isActive}
                   index={index}
@@ -156,7 +160,7 @@ const TabsContainer: React.FC<TabsContainerProps> = ({
           })}
         </div>
       ) : (
-        <div className="px-3 py-2 text-[hsl(var(--dark-3))]">No files open</div>
+        <div className="px-3 py-2 text-[hsl(var(--dark-3))]">No tabs open</div>
       )}
     </div>
   );

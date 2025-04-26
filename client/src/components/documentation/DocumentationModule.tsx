@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import FileTree from "./FileTree";
 import FileEditor from "./FileEditor";
 import { useWorkspace } from "@/context/WorkspaceProvider";
 import { File } from "@/types";
 import { FileText, Share, MoreHorizontal, Plus } from "lucide-react";
+import SidebarSplitter from "../ui/SidebarSplitter";
 
 const DocumentationModule = () => {
   const { 
@@ -16,6 +17,11 @@ const DocumentationModule = () => {
   
   const [showNewFileModal, setShowNewFileModal] = useState(false);
   const [newFileName, setNewFileName] = useState("");
+  
+  // Sidebar resizing state
+  const [sidebarWidth, setSidebarWidth] = useState(250);
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   const findDocumentById = (docs: File[], id: string | null): File | undefined => {
     if (!id) return undefined;
@@ -41,10 +47,56 @@ const DocumentationModule = () => {
     }
   };
   
+  // Sidebar resize handlers
+  const handleSidebarResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizingSidebar(true);
+  }, []);
+  
+  const handleSidebarResizeMove = useCallback((e: MouseEvent) => {
+    if (!isResizingSidebar) return;
+    
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    if (!containerRect) return;
+    
+    const containerLeft = containerRect.left;
+    const newWidth = Math.max(200, Math.min(400, e.clientX - containerLeft));
+    
+    setSidebarWidth(newWidth);
+  }, [isResizingSidebar]);
+  
+  const handleSidebarResizeEnd = useCallback(() => {
+    setIsResizingSidebar(false);
+  }, []);
+  
+  useEffect(() => {
+    if (isResizingSidebar) {
+      document.addEventListener('mousemove', handleSidebarResizeMove);
+      document.addEventListener('mouseup', handleSidebarResizeEnd);
+    } else {
+      document.removeEventListener('mousemove', handleSidebarResizeMove);
+      document.removeEventListener('mouseup', handleSidebarResizeEnd);
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleSidebarResizeMove);
+      document.removeEventListener('mouseup', handleSidebarResizeEnd);
+    };
+  }, [isResizingSidebar, handleSidebarResizeMove, handleSidebarResizeEnd]);
+  
   return (
-    <div className="flex-1 flex overflow-hidden">
-      {/* File Tree */}
-      <FileTree documents={documents} />
+    <div className="flex-1 flex overflow-hidden" ref={containerRef}>
+      {/* File Tree with dynamic width */}
+      <div style={{ width: sidebarWidth, flexShrink: 0 }} className="h-full overflow-hidden">
+        <FileTree documents={documents} />
+      </div>
+      
+      {/* Resizer between sidebar and content */}
+      <SidebarSplitter 
+        isResizing={isResizingSidebar}
+        onResizeStart={handleSidebarResizeStart}
+      />
       
       {/* Document Content */}
       <div className="flex-1 flex flex-col bg-[hsl(var(--dark-9))]">

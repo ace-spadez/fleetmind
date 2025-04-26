@@ -44,7 +44,7 @@ const findActiveFileInActivePanel = (layout: LayoutNode, activePanelId: string |
   };
   
   const activePanel = findPanel(layout);
-  return activePanel?.activeFileId || null;
+  return activePanel?.activeTabId || null;
 };
 
 const DRAG_DATA_TREE_NODE = 'application/json+tree-node';
