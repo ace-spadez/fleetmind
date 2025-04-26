@@ -1,10 +1,97 @@
-import { createContext, useContext, useState, ReactNode } from "react";
-import { Module, ChatData, File, TreeNode, Message, OrgBot, BotConnection } from "../types";
+import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import {
+  Module, ChatData, File, TreeNode, Message, OrgBot, BotConnection,
+  LayoutNode, EditorPanelNode, SplitterNode, SplitOrientation 
+} from "../types";
 import { mockChats } from "../data/mockChats";
 import { mockDocuments } from "../data/mockDocuments";
 import { mockCode } from "../data/mockCode";
 import { mockOrgBots } from "../data/mockOrgBots";
 import { mockOrgConnections } from "../data/mockOrgConnections";
+import { v4 as uuidv4 } from 'uuid'; // Need uuid for unique IDs
+
+// Helper function to find a panel node by ID
+const findPanelById = (node: LayoutNode, panelId: string): EditorPanelNode | null => {
+  if (node.type === 'panel' && node.id === panelId) {
+    return node;
+  }
+  if (node.type === 'splitter') {
+    const foundInChild1 = findPanelById(node.children[0], panelId);
+    if (foundInChild1) return foundInChild1;
+    const foundInChild2 = findPanelById(node.children[1], panelId);
+    if (foundInChild2) return foundInChild2;
+  }
+  return null;
+};
+
+// Helper function to update a node within the layout tree
+const updateNodeInLayout = (node: LayoutNode, updatedNode: LayoutNode): LayoutNode => {
+  if (node.id === updatedNode.id) {
+    return updatedNode;
+  }
+  if (node.type === 'splitter') {
+    return {
+      ...node,
+      children: [
+        updateNodeInLayout(node.children[0], updatedNode),
+        updateNodeInLayout(node.children[1], updatedNode)
+      ]
+    };
+  }
+  return node;
+};
+
+// Helper function to remove a node and potentially its parent splitter
+const removeNodeFromLayout = (node: LayoutNode, nodeIdToRemove: string): LayoutNode | null => {
+  if (node.id === nodeIdToRemove) {
+    return null; // Signal removal
+  }
+  
+  if (node.type === 'splitter') {
+    const child1 = removeNodeFromLayout(node.children[0], nodeIdToRemove);
+    const child2 = removeNodeFromLayout(node.children[1], nodeIdToRemove);
+
+    if (child1 === null && child2 === null) {
+      return null; // Remove splitter if both children are removed
+    } else if (child1 === null) {
+      return child2; // Promote child2
+    } else if (child2 === null) {
+      return child1; // Promote child1
+    } else {
+      // Both children remain, update the splitter node
+      return { ...node, children: [child1, child2] };
+    }
+  }
+  
+  return node; // Node is not the one to remove and not a splitter containing it
+};
+
+// Helper function to find the parent splitter of a node
+const findParentSplitter = (node: LayoutNode, childId: string): SplitterNode | null => {
+  if (node.type === 'splitter') {
+    if (node.children[0].id === childId || node.children[1].id === childId) {
+      return node;
+    }
+    const parent1 = findParentSplitter(node.children[0], childId);
+    if (parent1) return parent1;
+    const parent2 = findParentSplitter(node.children[1], childId);
+    if (parent2) return parent2;
+  }
+  return null;
+};
+
+// Helper function to find and update the content of a specific file node
+const findAndUpdateFileContent = (nodes: TreeNode[], fileId: string, newContent: string): TreeNode[] => {
+  return nodes.map(node => {
+    if (node.type === 'file' && node.id === fileId) {
+      return { ...node, content: newContent };
+    }
+    if (node.children) {
+      return { ...node, children: findAndUpdateFileContent(node.children, fileId, newContent) };
+    }
+    return node;
+  });
+};
 
 interface WorkspaceContextType {
   activeModule: Module;
@@ -20,12 +107,24 @@ interface WorkspaceContextType {
   updateDocumentContent: (id: string, content: string) => void;
   createDocument: (name: string, parentId?: string) => void;
   deleteDocument: (id: string) => void;
+  
+  // Code specific state
   codeFiles: TreeNode[];
   setCodeFiles: (files: TreeNode[] | ((prev: TreeNode[]) => TreeNode[])) => void;
-  activeCodeFileId: string | null;
-  setActiveCodeFileId: (id: string | null) => void;
-  openCodeFiles: string[];
-  setOpenCodeFiles: (files: string[] | ((prev: string[]) => string[])) => void;
+  editorLayout: LayoutNode;
+  setEditorLayout: (layout: LayoutNode | ((prev: LayoutNode) => LayoutNode)) => void;
+  activePanelId: string | null; // ID of the panel that currently has focus
+  setActivePanelId: (id: string | null) => void;
+  
+  // Functions to manipulate editor layout
+  openFileInPanel: (fileId: string, panelId?: string) => void;
+  closeFileInPanel: (fileId: string, panelId: string) => void;
+  splitPanel: (panelId: string, fileIdToMove: string, orientation: SplitOrientation, position: 'before' | 'after') => void;
+  updateSplitRatio: (splitterId: string, percentage: number) => void;
+  getFileData: (fileId: string) => TreeNode | null;
+  updateFileContent: (fileId: string, content: string) => void;
+
+  // Organization state
   orgBots: OrgBot[];
   setOrgBots: (bots: OrgBot[]) => void;
   orgConnections: BotConnection[];
@@ -36,24 +135,212 @@ interface WorkspaceContextType {
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
+// Initial editor layout: a single panel
+const initialPanelId = uuidv4();
+const initialLayout: LayoutNode = {
+  id: initialPanelId,
+  type: 'panel',
+  openFileIds: ["solarsystem"], // Start with one file open
+  activeFileId: "solarsystem",
+};
+
 export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
   console.log("WorkspaceProvider initialized");
   
-  const [activeModule, setActiveModule] = useState<Module>("chat");
+  const [activeModule, setActiveModule] = useState<Module>("code"); // Default to code module
   const [activeChannelId, setActiveChannelId] = useState<string>("assistant-bot");
   const [chats, setChats] = useState<ChatData[]>(mockChats);
   const [documents, setDocuments] = useState<File[]>(mockDocuments);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>("overview");
   const [codeFiles, setCodeFiles] = useState<TreeNode[]>(mockCode);
-  const [activeCodeFileId, setActiveCodeFileId] = useState<string | null>("solarsystem");
-  const [openCodeFiles, setOpenCodeFiles] = useState<string[]>(["solarsystem"]);
   
+  // New layout state
+  const [editorLayout, setEditorLayout] = useState<LayoutNode>(initialLayout);
+  const [activePanelId, setActivePanelId] = useState<string | null>(initialPanelId);
+
   // Organization state
   const [orgBots, setOrgBots] = useState<OrgBot[]>(mockOrgBots);
   const [orgConnections, setOrgConnections] = useState<BotConnection[]>(mockOrgConnections);
   const [activeBotId, setActiveBotId] = useState<string | null>(null);
 
-  const addMessage = (channelId: string, content: string, isBotMessage: boolean) => {
+  // --- Code File Content Update --- 
+  const updateFileContent = useCallback((fileId: string, newContent: string) => {
+    setCodeFiles(prevCodeFiles => findAndUpdateFileContent(prevCodeFiles, fileId, newContent));
+  }, []); // No dependencies needed if findAndUpdateFileContent is pure
+
+  // --- Code Editor Layout Functions --- 
+
+  const getFileData = useCallback((fileId: string): TreeNode | null => {
+    const find = (nodes: TreeNode[]): TreeNode | null => {
+      for (const node of nodes) {
+        if (node.type === 'file' && node.id === fileId) return node;
+        if (node.children) {
+          const found = find(node.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    return find(codeFiles);
+  }, [codeFiles]);
+
+  const openFileInPanel = useCallback((fileId: string, panelId?: string) => {
+    const targetPanelId = panelId || activePanelId;
+    if (!targetPanelId) return; // Should not happen if there's always a layout
+
+    setEditorLayout(prevLayout => {
+      const panel = findPanelById(prevLayout, targetPanelId);
+      if (!panel) return prevLayout;
+
+      let updatedPanel: EditorPanelNode;
+      if (!panel.openFileIds.includes(fileId)) {
+        updatedPanel = {
+          ...panel,
+          openFileIds: [...panel.openFileIds, fileId],
+          activeFileId: fileId // Make the newly opened file active
+        };
+      } else {
+        // File already open, just make it active
+        updatedPanel = { ...panel, activeFileId: fileId };
+      }
+
+      return updateNodeInLayout(prevLayout, updatedPanel);
+    });
+    // Set the panel containing the opened file as the active panel
+    setActivePanelId(targetPanelId);
+  }, [activePanelId]);
+
+  const closeFileInPanel = useCallback((fileId: string, panelId: string) => {
+    setEditorLayout(prevLayout => {
+      const panel = findPanelById(prevLayout, panelId);
+      if (!panel) return prevLayout;
+
+      const newOpenFileIds = panel.openFileIds.filter(id => id !== fileId);
+
+      // If this was the last file, remove the panel
+      if (newOpenFileIds.length === 0) {
+        const newLayout = removeNodeFromLayout(prevLayout, panelId);
+        // If layout becomes null (last panel closed), reset to initial state
+        if (!newLayout) {
+          const newInitialPanelId = uuidv4();
+          setActivePanelId(newInitialPanelId);
+          return {
+            id: newInitialPanelId,
+            type: 'panel',
+            openFileIds: [],
+            activeFileId: null,
+          };
+        } else {
+          // Find a remaining panel to activate (e.g., the first one found)
+          let newActivePanelId: string | null = null;
+          const findFirstPanel = (node: LayoutNode) => {
+             if (node.type === 'panel') newActivePanelId = node.id;
+             if (node.type === 'splitter' && !newActivePanelId) {
+               findFirstPanel(node.children[0]);
+               if (!newActivePanelId) findFirstPanel(node.children[1]);
+             }
+          }
+          findFirstPanel(newLayout);
+          setActivePanelId(newActivePanelId);
+        }
+        return newLayout || initialLayout; // Should not be null here based on above logic
+      }
+
+      // If the closed file was active, select the previous one or the new last one
+      let newActiveFileId = panel.activeFileId;
+      if (panel.activeFileId === fileId) {
+        const closedIndex = panel.openFileIds.indexOf(fileId);
+        newActiveFileId = newOpenFileIds[Math.max(0, closedIndex - 1)] || newOpenFileIds[newOpenFileIds.length - 1] || null;
+      }
+
+      const updatedPanel: EditorPanelNode = {
+        ...panel,
+        openFileIds: newOpenFileIds,
+        activeFileId: newActiveFileId,
+      };
+
+      return updateNodeInLayout(prevLayout, updatedPanel);
+    });
+  }, []);
+
+  const splitPanel = useCallback((panelId: string, fileIdToMove: string, orientation: SplitOrientation, position: 'before' | 'after') => {
+    setEditorLayout(prevLayout => {
+      const panelToSplit = findPanelById(prevLayout, panelId);
+      if (!panelToSplit || panelToSplit.openFileIds.length < 1) return prevLayout; // Cannot split if < 1 file
+
+      // Create the new panel
+      const newPanel: EditorPanelNode = {
+        id: uuidv4(),
+        type: 'panel',
+        openFileIds: [fileIdToMove],
+        activeFileId: fileIdToMove,
+      };
+
+      // Update the original panel
+      const originalPanelUpdated: EditorPanelNode = {
+        ...panelToSplit,
+        openFileIds: panelToSplit.openFileIds.filter(id => id !== fileIdToMove),
+        // Make remaining file active if the moved one was active
+        activeFileId: panelToSplit.activeFileId === fileIdToMove
+          ? panelToSplit.openFileIds.filter(id => id !== fileIdToMove)[0] || null 
+          : panelToSplit.activeFileId,
+      };
+      
+      // If original panel becomes empty after move, just replace it with new panel
+      if (originalPanelUpdated.openFileIds.length === 0) {
+         setActivePanelId(newPanel.id); // Activate the new panel
+         return updateNodeInLayout(prevLayout, { ...newPanel, id: panelToSplit.id }); // Reuse ID
+      }
+
+      // Create the new splitter node
+      const newSplitter: SplitterNode = {
+        id: uuidv4(),
+        type: 'splitter',
+        orientation,
+        children: position === 'before' 
+          ? [newPanel, originalPanelUpdated] 
+          : [originalPanelUpdated, newPanel],
+        splitPercentage: 50,
+      };
+      
+      // Replace the original panel with the splitter in the layout tree
+      const replacePanelWithSplitter = (node: LayoutNode): LayoutNode => {
+         if (node.id === panelToSplit.id) {
+           return newSplitter;
+         }
+         if (node.type === 'splitter') {
+           return { 
+             ...node, 
+             children: [replacePanelWithSplitter(node.children[0]), replacePanelWithSplitter(node.children[1])] 
+           };
+         }
+         return node;
+      };
+
+      const newLayout = replacePanelWithSplitter(prevLayout);
+      setActivePanelId(newPanel.id); // Activate the new panel
+      return newLayout;
+    });
+  }, []);
+
+  const updateSplitRatio = useCallback((splitterId: string, percentage: number) => {
+    setEditorLayout(prevLayout => {
+      const updateRatio = (node: LayoutNode): LayoutNode => {
+        if (node.type === 'splitter') {
+          if (node.id === splitterId) {
+            return { ...node, splitPercentage: Math.max(5, Math.min(95, percentage)) }; // Clamp 5-95%
+          }
+          return { ...node, children: [updateRatio(node.children[0]), updateRatio(node.children[1])] };
+        }
+        return node;
+      };
+      return updateRatio(prevLayout);
+    });
+  }, []);
+
+  // --- Other Context Functions (Chat, Docs, etc.) ---
+  // ... addMessage, updateDocumentContent, createDocument, deleteDocument remain the same ...
+   const addMessage = (channelId: string, content: string, isBotMessage: boolean) => {
     setChats(prev => {
       const channelIndex = prev.findIndex(chat => chat.channelId === channelId);
       
@@ -177,10 +464,16 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         deleteDocument,
         codeFiles,
         setCodeFiles,
-        activeCodeFileId,
-        setActiveCodeFileId,
-        openCodeFiles,
-        setOpenCodeFiles,
+        editorLayout,
+        setEditorLayout,
+        activePanelId,
+        setActivePanelId,
+        openFileInPanel,
+        closeFileInPanel,
+        splitPanel,
+        updateSplitRatio,
+        getFileData,
+        updateFileContent,
         orgBots,
         setOrgBots,
         orgConnections,

@@ -81,3 +81,32 @@ export type BotConnection = {
   target: string;
   type: ConnectionType;
 };
+
+// --- New types for Editor Layout ---
+
+export type SplitOrientation = 'horizontal' | 'vertical';
+
+// Base node type
+interface BaseLayoutNode {
+  id: string;
+}
+
+// Represents a panel holding editor tabs
+export interface EditorPanelNode extends BaseLayoutNode {
+  type: 'panel';
+  openFileIds: string[];
+  activeFileId: string | null;
+}
+
+// Represents a split between two other nodes
+export interface SplitterNode extends BaseLayoutNode {
+  type: 'splitter';
+  orientation: SplitOrientation;
+  children: [LayoutNode, LayoutNode]; // Two children nodes
+  splitPercentage: number; // Percentage of space for the first child (0-100)
+}
+
+// Union type for any node in the layout tree
+export type LayoutNode = EditorPanelNode | SplitterNode;
+
+// --- End of Editor Layout Types ---

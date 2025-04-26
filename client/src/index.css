@@ -58,6 +58,24 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 240 5% 17%;
     --sidebar-ring: 240 5% 83.9%;
+
+    /* Dark theme shades */
+    --dark-1: 220 16% 90%;
+    --dark-2: 220 14% 75%;
+    --dark-3: 220 12% 60%;
+    --dark-4: 220 10% 45%;
+    --dark-5: 220 10% 35%;
+    --dark-6: 220 10% 25%;
+    --dark-7: 220 10% 20%;
+    --dark-8: 220 10% 15%;
+    --dark-9: 220 10% 10%;
+    
+    /* Discord-inspired theme colors */
+    --discord-6: 235 10% 18%;
+    --discord-7: 235 10% 22%;
+    --discord-8: 235 10% 26%;
+    --discord-9: 235 12% 14%;
+    --discord-10: 235 14% 10%;
   }
 }
 

@@ -30,7 +30,7 @@ const EnhancedTooltip = ({
         sideOffset={8}
         className="flex flex-col bg-[#303135] text-white border border-[#5a5a5f] shadow-xl p-0 rounded-lg w-60 overflow-hidden"
         style={{
-          boxShadow: "0 0px 30px 30px rgba(0, 0, 0, 0.25)",
+          boxShadow: "0 0px 10px 0px rgba(0, 0, 0, 0.25)",
           borderRadius: "5px"
         }}
       >
