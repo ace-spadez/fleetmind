@@ -19,6 +19,7 @@ const App: React.FC = () => {
     if (path.startsWith('/organization')) return 'organization';
     if (path.startsWith('/chart')) return 'chart';
     if (path.startsWith('/budget')) return 'budget';
+    if (path.startsWith('/task')) return 'task';
     if (path.startsWith('/settings')) return 'settings';
     return 'home';
   };
@@ -39,6 +40,7 @@ const App: React.FC = () => {
             <Route path="/organization" component={() => <Home initialModule="organization" />} />
             <Route path="/chart" component={() => <Home initialModule="chart" />} />
             <Route path="/budget" component={() => <Home initialModule="budget" />} />
+            <Route path="/task" component={() => <Home initialModule="task" />} />
             <Route path="/settings" component={() => <Home initialModule="settings" />} />
             <Route component={NotFound} />
           </Switch>

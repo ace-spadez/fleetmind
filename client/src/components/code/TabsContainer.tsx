@@ -100,7 +100,7 @@ const TabsContainer: React.FC<TabsContainerProps> = ({
     });
     
     e.dataTransfer.setData('application/json+tab-split', dragData);
-    e.dataTransfer.setData('application/json', dragData);
+    e.dataTransfer.setData('application/json', dragData); 
     e.dataTransfer.setData('text/plain', tabId); 
     e.dataTransfer.effectAllowed = 'move';
   };

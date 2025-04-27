@@ -140,6 +140,54 @@ const ChannelList = () => {
     },
   ];
 
+  const directMessages: Channel[] = [
+    { 
+      id: "dm-alex",
+      name: "Alex Kim",
+      type: "direct",
+      active: activeChannelId === "dm-alex",
+      status: "online"
+    },
+    { 
+      id: "dm-taylor",
+      name: "Taylor Chen",
+      type: "direct",
+      active: activeChannelId === "dm-taylor",
+      status: "away"
+    },
+    { 
+      id: "dm-jordan",
+      name: "Jordan Patel",
+      type: "direct",
+      active: activeChannelId === "dm-jordan",
+      status: "offline"
+    },
+  ];
+
+  const textChannels: Channel[] = [
+    { 
+      id: "channel-general",
+      name: "general",
+      type: "text",
+      active: activeChannelId === "channel-general",
+      memberCount: 18
+    },
+    { 
+      id: "channel-development",
+      name: "development",
+      type: "text",
+      active: activeChannelId === "channel-development",
+      memberCount: 12
+    },
+    { 
+      id: "channel-design",
+      name: "design",
+      type: "text",
+      active: activeChannelId === "channel-design",
+      memberCount: 8
+    },
+  ];
+
   const handleChannelClick = (channelId: string) => {
     // Set the selected channel as the active channel
     setActiveChannelId(channelId);
@@ -153,6 +201,20 @@ const ChannelList = () => {
     return (
       <div className="relative flex-shrink-0 w-2 h-2 mr-2">
         <div className={`absolute inset-0 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-500'}`}></div>
+      </div>
+    );
+  };
+
+  // Simple status indicator for direct messages
+  const UserStatusIndicator = ({ status }: { status: string }) => {
+    const statusColor = 
+      status === "online" ? "bg-emerald-500" : 
+      status === "away" ? "bg-amber-500" : 
+      "bg-gray-500";
+    
+    return (
+      <div className="relative flex-shrink-0 w-2 h-2 mr-2">
+        <div className={`absolute inset-0 rounded-full ${statusColor}`}></div>
       </div>
     );
   };
@@ -213,7 +275,7 @@ const ChannelList = () => {
         </div>
         
         {/* Directive Channels Section */}
-        <div>
+        <div className="mb-4">
           <div className="flex items-center justify-between text-[10px] font-semibold text-[hsl(var(--dark-2))] py-1">
             <div className="flex items-center gap-1">
               <ChevronDown size={10} />
@@ -259,6 +321,75 @@ const ChannelList = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+        
+        {/* Direct Messages Section */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between text-[10px] font-semibold text-[hsl(var(--dark-2))] py-1">
+            <div className="flex items-center gap-1">
+              <ChevronDown size={10} />
+              <span className="tracking-wider">Direct Messages</span>
+            </div>
+            <button className="hover:text-white transition-colors hover:bg-[hsl(var(--dark-7))] rounded p-1">
+              <Plus size={12} />
+            </button>
+          </div>
+          
+          <div className="space-y-1">
+            {directMessages.map((channel) => (
+              <div
+                key={channel.id}
+                onClick={() => handleChannelClick(channel.id)}
+                className={`flex items-center px-2 py-1.5 rounded-md group
+                  hover:bg-[hsl(var(--dark-7))] 
+                  ${channel.active ? 'bg-[hsl(var(--dark-7))] text-white' : 'text-[hsl(var(--dark-2))]'}
+                  hover:text-white transition-colors cursor-pointer`}
+              >
+                <UserStatusIndicator status={channel.status || 'offline'} />
+                
+                <div className="flex-1 min-w-0 truncate text-xs font-medium">
+                  {channel.name}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Text Channels Section */}
+        <div>
+          <div className="flex items-center justify-between text-[10px] font-semibold text-[hsl(var(--dark-2))] py-1">
+            <div className="flex items-center gap-1">
+              <ChevronDown size={10} />
+              <span className="tracking-wider">Text Channels</span>
+            </div>
+            <button className="hover:text-white transition-colors hover:bg-[hsl(var(--dark-7))] rounded p-1">
+              <Plus size={12} />
+            </button>
+          </div>
+          
+          <div className="space-y-1">
+            {textChannels.map((channel) => (
+              <div
+                key={channel.id}
+                onClick={() => handleChannelClick(channel.id)}
+                className={`flex items-center px-2 py-1.5 rounded-md group
+                  hover:bg-[hsl(var(--dark-7))] 
+                  ${channel.active ? 'bg-[hsl(var(--dark-7))] text-white' : 'text-[hsl(var(--dark-2))]'}
+                  hover:text-white transition-colors cursor-pointer`}
+              >
+                <div className="flex-1 min-w-0 text-xs font-medium">
+                  <div className="truncate">
+                    #{channel.name}
+                  </div>
+                  {channel.memberCount && (
+                    <div className="text-[10px] text-[hsl(var(--dark-3))] truncate">
+                      {channel.memberCount} members
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

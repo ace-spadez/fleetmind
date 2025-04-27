@@ -6,6 +6,9 @@ import ChatMessages from '../chat/ChatMessages';
 import ChatInput from '../chat/ChatInput';
 import { EditorPanelNode, SplitOrientation, LayoutNode, ContentType, TreeNode } from '@/types';
 import './style.css'; // Ensure styles are imported
+import { Editor } from '@monaco-editor/react';
+import ChatTab from '../chat/ChatTab';
+import TaskTab from '../task/TaskTab';
 
 interface ContentPanelProps {
   panelNode: EditorPanelNode;
@@ -227,12 +230,20 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
         const codeFile = activeContent as TreeNode;
         
         return (
-          <CodeEditor
-            key={codeFile.id} 
-            fileId={codeFile.id}
-            filename={codeFile.name}
-            content={codeFile.content || ''} 
-            onChange={handleEditorContentChange} 
+          <Editor
+            height="100%"
+            theme="vs-dark"
+            path={codeFile.id}
+            defaultLanguage="typescript"
+            defaultValue={codeFile.content || ''}
+            onChange={handleEditorContentChange}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              wordWrap: 'on',
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+            }}
           />
         );
         
@@ -243,6 +254,8 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
             <ChatInput channelId={activeTabId} />
           </div>
         );
+      case 'task':
+        return <TaskTab tab={activeContent as TreeNode} panelId={panelNode.id} />;
       default:
         return (
           <div className="flex items-center justify-center h-full text-[hsl(var(--dark-3))]">

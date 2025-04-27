@@ -7,6 +7,8 @@ import ChatInput from '../chat/ChatInput';
 import { EditorPanelNode, SplitOrientation, LayoutNode, ContentType, TreeNode } from '@/types';
 import './style.css'; // Ensure styles are imported
 import DirectiveBusChat from '../chat/DirectiveBusChat';
+import TaskPanel from '../task/TaskPanel';
+import TimelineTab from '../timeline/TimelineTab';
 
 interface ContentPanelProps {
   panelNode: EditorPanelNode;
@@ -271,6 +273,18 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
             </div>
           </div>
         );
+        
+      case 'task':
+        // Cast with unknown first to prevent type errors
+        const taskNode = activeTabData as unknown as TreeNode;
+        if (!taskNode) return <div className="p-4">Error: Task not found.</div>;
+        
+        return <TaskPanel node={taskNode} panelId={panelNode.id} />;
+        
+      case 'timeline':
+        // Handle timeline view
+        return <TimelineTab panelId={panelNode.id} />;
+        
       default:
         return (
           <div className="flex items-center justify-center h-full text-[hsl(var(--dark-3))]">
@@ -293,7 +307,7 @@ const ContentPanel: React.FC<ContentPanelProps> = ({ panelNode }) => {
         panelId={panelNode.id}
         openTabs={panelNode.openTabIds}
         activeTabId={panelNode.activeTabId}
-        // contentType={panelNode.contentType} // REMOVED
+        contentType={activeContentType || 'code'} // Provide a default value
         setActiveTabId={(tabId) => {
           // Update panel's activeTabId directly
           setEditorLayout(layout => updateNodeInLayout(layout, { ...panelNode, activeTabId: tabId }));

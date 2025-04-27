@@ -3,6 +3,7 @@ import { useWorkspace } from '@/context/WorkspaceProvider';
 import CodeTree from './CodeTree';
 import ChannelList from '../chat/ChannelList';
 import FileTree from '../documentation/FileTree';
+import TaskTree from '../task/TaskTree';
 import { Module } from '@/types';
 
 interface ModulePanelProps {
@@ -19,6 +20,8 @@ const ModulePanel: React.FC<ModulePanelProps> = ({ width, onFileOpen }) => {
       case 'chat':
         return 'bg-[hsl(var(--discord-9))]';
       case 'docs':
+        return 'bg-[hsl(var(--dark-8))]';
+      case 'task':
         return 'bg-[hsl(var(--dark-8))]';
       case 'code':
       default:
@@ -41,6 +44,8 @@ const ModulePanel: React.FC<ModulePanelProps> = ({ width, onFileOpen }) => {
       case 'docs':
         // Use the real FileTree component for docs
         return <FileTree documents={documents} />;
+      case 'task':
+        return <TaskTree onTaskOpen={onFileOpen} />;
       case 'organization':
         // If you have an OrganizationTree, you would render it here
         return <div className="p-4 text-white">Organization tree not implemented</div>;

@@ -4,6 +4,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import ChatModule from "@/components/chat/ChatModule";
 import DocumentationModule from "@/components/documentation/DocumentationModule";
 import CodeModule from "@/components/code/CodeModule";
+import TaskModule from "@/components/task/TaskModule";
 import OrganizationModule from "@/components/organization/OrganizationModule";
 import { Module } from "@/types";
 import CommandPalette from "@/components/CommandPalette";
@@ -95,6 +96,8 @@ export default function Home({ initialModule }: HomeProps) {
             <CodeModule />
           ) : activeModule === "organization" ? (
             <OrganizationModule />
+          ) : activeModule === "task" ? (
+            <TaskModule isActiveModule={true} />
           ) : activeModule === "home" ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
-import { X, Code, BotMessageSquare, FileText, Network } from 'lucide-react';
-import { ContentType } from '@/types';
+import { X } from 'lucide-react';
+import { TreeNode, ContentType } from '@/types';
 
 interface ContentTabProps {
   id: string;
@@ -35,7 +35,7 @@ const ContentTab: React.FC<ContentTabProps> = ({
 
   const handleDragStart = (e: React.DragEvent) => {
     // Set data in multiple formats to maximize compatibility
-    const splitData = JSON.stringify({ id, contentType, sourcePanelId: panelId });
+    const splitData = JSON.stringify({ fileId: id, contentType, sourcePanelId: panelId });
     
     // For internal reordering within the same panel
     e.dataTransfer.setData('application/json+tab-reorder', 
@@ -76,57 +76,66 @@ const ContentTab: React.FC<ContentTabProps> = ({
     }
   };
 
-  const handleDragEnd = () => {
-    if (tabRef.current) {
-      tabRef.current.classList.remove('opacity-50');
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // Must prevent default to allow drop
+    
+    // Set the drop effect based on source
+    if (e.dataTransfer.types.includes('application/json+tab-reorder')) {
+      // Cannot access data during dragover either
+      e.dataTransfer.dropEffect = 'move';
     }
+  };
+
+  const handleDragEnd = () => {
+    if (tabRef.current) tabRef.current.classList.remove('opacity-50');
     onDragEndInternal();
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault(); // Needed to allow drop
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  // Get icon based on content type
-  const getIcon = () => {
+  // Determine the icon color based on content type
+  const getIconColor = () => {
     switch (contentType) {
       case 'code':
-        return <Code size={14} className="mr-1.5" />;
+        return 'text-blue-400';
       case 'chat':
-        return <BotMessageSquare size={14} className="mr-1.5" />;
+        return 'text-green-400';
       case 'docs':
-        return <FileText size={14} className="mr-1.5" />;
-      case 'organization':
-        return <Network size={14} className="mr-1.5" />;
+        return 'text-amber-400';
+      case 'task':
+        return 'text-purple-400';
       default:
-        return <FileText size={14} className="mr-1.5" />;
+        return 'text-gray-400';
     }
   };
 
   return (
     <div
       ref={tabRef}
-      className={`flex items-center text-xs px-3 py-1.5 border-r border-gray-700/50 select-none
-        ${isActive ? 'bg-[hsl(var(--dark-9))] text-white font-medium' : 'bg-[hsl(var(--dark-8))] text-[hsl(var(--dark-3))]'}
-        hover:bg-[hsl(var(--dark-7))] hover:text-white cursor-pointer transition-colors`}
+      className={`
+        flex items-center px-2.5 py-1.5 cursor-pointer border-r border-gray-700/50 
+        select-none gap-1.5 max-w-[160px] transition-colors
+        ${isActive 
+          ? 'bg-[hsl(var(--dark-6))] border-t-2 border-t-[hsl(var(--primary))] border-b-0' 
+          : 'hover:bg-[hsl(var(--dark-6))/50] border-t-2 border-t-transparent'}
+      `}
       onClick={() => onActivate(id, panelId)}
       draggable
       onDragStart={handleDragStart}
       onDragEnter={handleDragEnter}
-      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
     >
-      {getIcon()}
-      <span className="truncate max-w-[120px]">{title}</span>
+      {/* Content type indicator */}
+      <div className={`w-2 h-2 rounded-full ${getIconColor()}`}></div>
+      
+      <span className="truncate text-xs">{title}</span>
       <button
-        className="ml-2 opacity-50 hover:opacity-100 focus:opacity-100 transition-opacity"
-        onClick={(e) => {
-          e.stopPropagation();
+        className="h-4 w-4 rounded-sm hover:bg-[hsl(var(--dark-8))] flex items-center justify-center flex-shrink-0"
+        onClick={(e) => { 
+          e.stopPropagation(); // Prevent triggering tab activation
           onClose(id, panelId, e);
         }}
       >
-        <X size={14} />
+        <X className="h-3 w-3" />
       </button>
     </div>
   );

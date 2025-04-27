@@ -17,10 +17,12 @@ export type Channel = {
   id: string;
   name: string;
   botId?: string;
-  type: 'primary' | 'directive';
+  type: 'primary' | 'directive' | 'direct' | 'text';
   active?: boolean;
   botType?: string;
   isActive?: boolean;
+  status?: string;
+  memberCount?: number;
 };
 
 export type Message = {
@@ -92,7 +94,7 @@ interface BaseLayoutNode {
 }
 
 // Content type for what can be displayed in editor panels
-export type ContentType = 'code' | 'chat' | 'docs' | 'organization';
+export type ContentType = 'code' | 'chat' | 'docs' | 'organization' | 'timeline' | 'task';
 
 // Content item interface for the new generalized tabs
 export interface TabContentItem {

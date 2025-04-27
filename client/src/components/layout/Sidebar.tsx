@@ -15,7 +15,13 @@ import {
   Moon,
   BotMessageSquare,
   Network,
-  Terminal
+  Terminal,
+  CheckSquare,
+  BrainCircuit,
+  Library,
+  HeartPulse,
+  Activity,
+  PiggyBank
 } from "lucide-react";
 import { EnhancedTooltip } from "@/components/ui/enhanced-tooltip";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,43 +39,50 @@ const Sidebar = () => {
   const navItems = [
     { 
       id: "chat", 
-      name: "Chat",
+      name: "Channels",
       icon: <BotMessageSquare size={17} />, 
       module: "chat" as Module,
       description: "Chat with AI assistants and view conversations between bots" 
     },
     { 
       id: "docs", 
-      name: "Documentation",
-      icon: <NotebookText size={17} />, 
+      name: "Plan & Document",
+      icon: <Library size={17} />, 
       module: "docs" as Module,
       description: "Create and manage project documentation and notes" 
     },
     { 
       id: "code", 
-      name: "Code Editor",
+      name: "Code",
       icon: <Code size={17} />, 
       module: "code" as Module,
       description: "View and edit code files with syntax highlighting" 
     },
     { 
+      id: "task", 
+      name: "Tasks",
+      icon: <CheckSquare size={17} />, 
+      module: "task" as Module,
+      description: "Manage and track tasks and project progress" 
+    },
+    { 
       id: "chart", 
-      name: "Charts",
-      icon: <PieChart size={17} />, 
+      name: "Monitor",
+      icon: <Activity size={17} />, 
       module: "chart" as Module,
       description: "Visualize metrics and data with interactive charts" 
     },
     { 
       id: "organization", 
-      name: "Organization",
-      icon: <Network size={17} />, 
+      name: "Orchestration",
+      icon: <BrainCircuit size={17} />, 
       module: "organization" as Module,
       description: "View the organization structure and bot hierarchy" 
     },
     { 
       id: "budget", 
       name: "Budget",
-      icon: <DollarSign size={17} />, 
+      icon: <PiggyBank size={17} />, 
       module: "budget" as Module,
       description: "Track and manage project budget and expenses" 
     },

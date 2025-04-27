@@ -145,7 +145,7 @@ const initialLayout: LayoutNode = {
   type: 'panel',
   openTabIds: ["solarsystem"], // Start with one file open
   activeTabId: "solarsystem",
-  // contentType: 'code' // REMOVED
+  contentType: 'code'
 };
 
 export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
@@ -198,11 +198,21 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       return { id: tabId, title: codeFile.name, type: 'code' };
     }
     
+    // Check if it's a timeline view
+    if (tabId === 'timeline-view') {
+      return { id: tabId, title: 'Agent Timeline', type: 'timeline' };
+    }
+    
     // Check if it's a document (add logic if needed)
     // const document = getDocumentData(tabId);
     // if (document) {
     //   return { id: tabId, title: document.name, type: 'docs' };
     // }
+
+    // Check if it's a task (starts with task-)
+    if (tabId.startsWith('task-')) {
+      return { id: tabId, title: `Task ${tabId.split('-')[1]}`, type: 'task' };
+    }
 
     // If not a code file or document, assume it's a chat channel ID
     // (This relies on the assumption that only valid IDs are passed to openFileInPanel)
@@ -240,11 +250,11 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
           ...panel,
           openTabIds: [...panel.openTabIds, contentId],
           activeTabId: contentId, // Make the newly opened content active
-          // No contentType needed here anymore
+          contentType: tabData.type
         };
       } else {
         // Content already open, just make it active
-        updatedPanel = { ...panel, activeTabId: contentId }; // No contentType needed here
+        updatedPanel = { ...panel, activeTabId: contentId, contentType: tabData.type };
       }
 
       return updateNodeInLayout(prevLayout, updatedPanel);
@@ -269,7 +279,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
             type: 'panel',
             openTabIds: [],
             activeTabId: null,
-            // No contentType needed
+            contentType: 'code'
           };
         }
         // If layout becomes null (last panel closed), reset to initial state
@@ -281,7 +291,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
             type: 'panel',
             openTabIds: [],
             activeTabId: null,
-            // No contentType needed
+            contentType: 'code'
           };
         } else {
           // Find a remaining panel to activate (e.g., the first one found)
@@ -310,7 +320,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         ...panel,
         openTabIds: newOpenTabIds,
         activeTabId: newActiveTabId,
-        // No contentType
+        contentType: panel.contentType
       };
 
       return updateNodeInLayout(prevLayout, updatedPanel);
@@ -328,29 +338,53 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
         // For now, we'll assume it is available or bail out.
         return; // Abort split if the item doesn't exist
     }
+
+    console.log("Split operation - Content data:", tabDataToMove);
     
     setEditorLayout(prevLayout => {
       const panelToSplit = findPanelById(prevLayout, panelId);
-      if (!panelToSplit || !panelToSplit.openTabIds.includes(contentIdToMove)) return prevLayout; 
-
+      if (!panelToSplit) {
+        console.error(`Cannot find panel with ID ${panelId}`);
+        return prevLayout;
+      }
+      
+      // For files dragged from the tree, they won't be in openTabIds
+      // We check if it exists in the data but not in the panel
+      const contentExists = tabDataToMove && tabDataToMove.id === contentIdToMove;
+      const isInPanel = panelToSplit.openTabIds.includes(contentIdToMove);
+      
+      if (!contentExists) {
+        console.error(`Item with ID ${contentIdToMove} does not exist.`);
+        return prevLayout;
+      }
+      
+      console.log(`Creating split for ${contentIdToMove} from panel ${panelId}, content in panel: ${isInPanel}`);
+      
       // Create the new panel with the moved content
       const newPanel: EditorPanelNode = {
         id: uuidv4(),
         type: 'panel',
         openTabIds: [contentIdToMove],
         activeTabId: contentIdToMove,
-        // No contentType
+        contentType: tabDataToMove.type
       };
 
-      // Update the original panel
-      const originalPanelUpdated: EditorPanelNode = {
-        ...panelToSplit,
-        openTabIds: panelToSplit.openTabIds.filter(id => id !== contentIdToMove),
-        activeTabId: panelToSplit.activeTabId === contentIdToMove
-          ? panelToSplit.openTabIds.filter(id => id !== contentIdToMove)[0] || null 
-          : panelToSplit.activeTabId,
-        // No contentType
-      };
+      // Only remove from original panel if it was already there
+      let originalPanelUpdated: EditorPanelNode;
+      if (isInPanel) {
+        // Update the original panel by removing the content being moved
+        originalPanelUpdated = {
+          ...panelToSplit,
+          openTabIds: panelToSplit.openTabIds.filter(id => id !== contentIdToMove),
+          activeTabId: panelToSplit.activeTabId === contentIdToMove
+            ? panelToSplit.openTabIds.filter(id => id !== contentIdToMove)[0] || null 
+            : panelToSplit.activeTabId,
+          contentType: panelToSplit.contentType
+        };
+      } else {
+        // Item not in original panel, just keep the panel as is
+        originalPanelUpdated = { ...panelToSplit };
+      }
       
       // Create the new splitter node
       const newSplitter: SplitterNode = {
@@ -381,7 +415,7 @@ export const WorkspaceProvider = ({ children }: { children: ReactNode }) => {
       setActivePanelId(newPanel.id); // Activate the new panel
       return newLayout;
     });
-  }, [getTabData]); // Add getTabData dependency
+  }, [getTabData]);
 
   const updateSplitRatio = useCallback((splitterId: string, percentage: number) => {
     setEditorLayout(prevLayout => {

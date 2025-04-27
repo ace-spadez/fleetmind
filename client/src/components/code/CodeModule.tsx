@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useWorkspace } from "@/context/WorkspaceProvider";
 import ModulePanel from "./ModulePanel";
 import EditorLayout from "./EditorLayout";
-import SidebarSplitter from "../ui/SidebarSplitter";
+import SidebarSplitter from "../shared/SidebarSplitter";
 
 const CodeModule = () => {
   const { 
@@ -45,9 +45,12 @@ const CodeModule = () => {
   };
 
   // --- Tree Resizing Logic --- 
-  const handleTreeResizeStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleTreeResizeStart = useCallback((e?: React.MouseEvent) => {
+    // Check if event exists before trying to use it
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setIsResizingTree(true);
   }, []);
   
@@ -94,8 +97,9 @@ const CodeModule = () => {
       
       {/* Resizer handle using the SidebarSplitter component */}
       <SidebarSplitter 
-        isResizing={isResizingTree} 
-        onResizeStart={handleTreeResizeStart} 
+        onResizeStart={handleTreeResizeStart}
+        onResize={(width) => setTreeWidth(width)}
+        onResizeEnd={handleTreeResizeMouseUp}
       />
       
       {/* Editor area */}

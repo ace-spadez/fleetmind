@@ -357,9 +357,11 @@ const CodeTree = ({ codeFiles, onFileOpen }: CodeTreeProps) => {
     e.stopPropagation(); // Prevent triggering folder drag/click
     
     // Set the data for the drop target (EditorPanel)
-    const dragData = JSON.stringify({ fileId });
+    const dragData = JSON.stringify({ fileId, contentType: 'code' });
     e.dataTransfer.setData('application/json', dragData);
     e.dataTransfer.effectAllowed = 'move';
+    
+    console.log("File drag started with data:", { fileId, contentType: 'code' });
   };
   
   // --- Helper Functions (Find Parent, Update Tree) ---
